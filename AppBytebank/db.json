@@ -1,0 +1,20 @@
+{
+  "usuarios": [
+    {
+      "id": 1,
+      "userName": "Usuário Teste",
+      "email": "teste@email.com",
+      "password": "123456",
+      "terms": true,
+      "dataCriacao": "2025-05-27T11:49:13.701Z"
+    },
+    {
+      "id": 2,
+      "userName": "Alan ",
+      "email": "email@email.com",
+      "password": "123",
+      "terms": false,
+      "dataCriacao": "2025-08-30T13:56:00.173Z"
+    }
+  ]
+}

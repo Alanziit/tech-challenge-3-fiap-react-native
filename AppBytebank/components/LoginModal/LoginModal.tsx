@@ -1,3 +1,5 @@
+import { User } from "@/financeiro/interfaces/user.interface";
+import { getUsers } from "@/financeiro/util.service";
 import React, { useState } from "react";
 import {
   Modal,
@@ -12,7 +14,6 @@ import {
 // se quiser Redux, pode importar aqui:
 // import { useDispatch } from "react-redux";
 // import { updateUser } from "../../redux/userSlice";
-// import { getUsers } from "../../financeiro/util-services";
 
 interface LoginModalProps {
   visible: boolean;
@@ -22,18 +23,43 @@ interface LoginModalProps {
 export default function LoginModal({ visible, onClose }: LoginModalProps) {
   const [formData, setFormData] = useState({ email: "", password: "" });
 
-  const handleChange = (name: string, value: string) => {
-    setFormData({ ...formData, [name]: value });
+  const handleChangeFormData = (field: string, text: string) => {
+    setFormData({
+      ...formData,
+      [field]: text,
+    });
   };
 
-  const handleSubmit = async () => {
-    // aqui você pode chamar sua API getUsers
-    if (formData.email === "teste@email.com" && formData.password === "123") {
-      Alert.alert("Sucesso", "Login realizado com sucesso!");
-      onClose();
+  const handleSubmit = async (event:any) => {
+    event.preventDefault();
+
+    const response = await getUsers();
+
+    if (response.ok) {
+      const usuarios = await response.json();
+
+      const usuario = usuarios.filter(
+        (usuario: User) =>
+          usuario.email == formData.email &&
+          usuario.password == formData.password
+      );
+
+      if (usuario.length > 0) {
+        alert("Login realizado com sucesso!");
+        onClose();
+
+        //TODO TRAZER O REDUX AQUI
+        //dispatch(updateUser({ name: usuario[0].userName, email: usuario[0].email, id: usuario[0].id }));
+        console.log(usuario[0]);
+
+        //UTILIZAR O NAVIGATION AO INVÉS DE REDIRECT
+        //redirect(`/financeiro/pageUser/id=${usuario[0].id}`);
+      } else {
+        alert("Erro verifique usuário e senha");
+      }
     } else {
-      Alert.alert("Erro", "Usuário ou senha inválidos!");
-    }
+      alert("Erro ao conectar com servidor");
+  }
   };
 
   return (
@@ -56,7 +82,7 @@ export default function LoginModal({ visible, onClose }: LoginModalProps) {
             style={styles.input}
             placeholder="Digite seu email"
             value={formData.email}
-            onChangeText={(text) => handleChange("email", text)}
+            onChangeText={(text) => handleChangeFormData("email", text)}
             keyboardType="email-address"
           />
 
@@ -64,7 +90,7 @@ export default function LoginModal({ visible, onClose }: LoginModalProps) {
             style={styles.input}
             placeholder="Digite sua senha"
             value={formData.password}
-            onChangeText={(text) => handleChange("password", text)}
+            onChangeText={(text) => handleChangeFormData("password", text)}
             secureTextEntry
           />
 
@@ -124,3 +150,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
+function redirect(arg0: string) {
+  throw new Error("Function not implemented.");
+}
+

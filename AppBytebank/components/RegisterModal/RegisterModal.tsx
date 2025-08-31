@@ -1,3 +1,5 @@
+import { Account } from "@/financeiro/interfaces/account.interface";
+import { createAccount, createUser, getUsers } from "@/financeiro/util.service";
 import React, { useState } from "react";
 import {
   Modal,
@@ -9,7 +11,6 @@ import {
   Image,
   Alert,
 } from "react-native";
-// import { createAccount, createUser, getUsers } from "../../financeiro/util-services";
 
 interface RegisterModalProps {
   visible: boolean;
@@ -22,19 +23,54 @@ export default function RegisterModal({ visible, onClose }: RegisterModalProps) 
     email: "",
     password: "",
     terms: false,
+    id: 0,
+    dataCriacao: new Date(),
   });
 
   const handleChange = (name: string, value: string) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async () => {
-    if (!formData.userName || !formData.email || !formData.password) {
-      Alert.alert("Erro", "Preencha todos os campos");
-      return;
+  const handleAccount = async () => {
+    const novaContaUsuario: Account = {
+        userName: formData.userName,
+        id: Number(formData.id),
+        dataCriacao: formData.dataCriacao,
+        saldo: 0,
+        extrato: [],
+      };
+
+      const response = await createAccount(novaContaUsuario);
+
+      if(response.ok) {
+        console.log("Conta criada com sucesso!");
+      }
+  };
+
+  const handleSubmit = async (event:any) => {
+    event.preventDefault();
+
+    const responseUsers = await getUsers();
+
+    if (responseUsers.ok) {
+      const usuarios = await responseUsers.json();
+
+      const idUsuario =
+        usuarios.length > 0 ? parseInt(usuarios[usuarios.length - 1].id) + 1 : 1;
+      formData.id = idUsuario;
     }
-    // aqui você faria createUser(formData)
-    Alert.alert("Sucesso", "Usuário cadastrado!");
+
+    const response = await createUser(formData);
+
+    if (response.ok) {
+      handleAccount();
+      alert("Usuário cadastrado com sucesso!");
+      setFormData({} as any);
+    } else {
+      alert("Erro ao cadastrar usuário!");
+      setFormData({} as any);
+    }
+
     onClose();
   };
 
