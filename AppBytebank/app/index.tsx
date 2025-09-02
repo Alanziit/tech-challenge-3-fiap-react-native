@@ -10,13 +10,15 @@ import {
   ScrollView,
   Dimensions,
 } from "react-native";
-
+import { User } from "@/financeiro/interfaces/user.interface";
+import UserHome from "@/components/UserHome/UserHome";
 
 export default function Index() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(Dimensions.get("window").width);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalRegisterOpen, setIsModalRegisterOpen] = useState(false);
+  const [loggedUser, setLoggedUser] = useState<User | null>(null); // Usuário logado
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
@@ -27,6 +29,23 @@ export default function Index() {
     return () => subscription?.remove();
   }, []);
 
+  // Função chamada pelo LoginModal quando o login for bem-sucedido
+  const handleLoginSuccess = (user: User) => {
+    setLoggedUser(user); // Atualiza o estado do usuário logado
+    setIsModalOpen(false); // Fecha o modal
+  };
+
+  // Tela principal quando o usuário está logado
+  if (loggedUser) {
+    return (
+      <UserHome
+        user={loggedUser}
+        onLogout={() => setLoggedUser(null)}
+      />
+    );
+  }
+
+  // Tela padrão (home) quando não há usuário logado
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -146,7 +165,7 @@ export default function Index() {
 
         {/* Footer */}
         <View style={styles.footer}>
-        <View style={styles.services}>
+          <View style={styles.services}>
             <Text style={styles.footerTitle}>Serviços</Text>
             <Text style={styles.footerText}>Conta corrente</Text>
             <Text style={styles.footerText}>Conta PJ</Text>
@@ -175,7 +194,7 @@ export default function Index() {
       </ScrollView>
 
       {/* Modal Login */}
-      <LoginModal visible={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <LoginModal visible={isModalOpen} onClose={() => setIsModalOpen(false)} onLoginSuccess={handleLoginSuccess} />
 
       {/* Modal Registro */}
       <RegisterModal
@@ -188,6 +207,12 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#004D61" },
+  loggedContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#004D61",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-evenly",
@@ -204,7 +229,7 @@ const styles = StyleSheet.create({
     borderColor: "#47A138",
     marginHorizontal: 5,
   },
-  buttonText: { color: "#47A138",textAlign: "center"},
+  buttonText: { color: "#47A138", textAlign: "center" },
   services: {},
   contact: {},
   secondary: { backgroundColor: "transparent" },
@@ -230,7 +255,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   advantage: { width: 150, margin: 10, alignItems: "center" },
-  advantageTitle: { color: "#47A138", fontWeight: "bold", marginTop: 5,textAlign: "center" },
+  advantageTitle: {
+    color: "#47A138",
+    fontWeight: "bold",
+    marginTop: 5,
+    textAlign: "center",
+  },
   advantageText: { textAlign: "center", color: "#767676" },
   footer: {
     marginTop: 30,
@@ -238,7 +268,20 @@ const styles = StyleSheet.create({
     backgroundColor: "black",
     alignItems: "center",
   },
-  footerTitle: { fontWeight: "bold", marginBottom: 15,marginTop:15, color: "white",textAlign: "center" },
+  footerTitle: {
+    fontWeight: "bold",
+    marginBottom: 15,
+    marginTop: 15,
+    color: "white",
+    textAlign: "center",
+  },
   footerLogo: { alignItems: "center", marginTop: 10 },
-  footerText: { color: "white",textAlign: "center"}
+  footerText: { color: "white", textAlign: "center" },
+  welcomeText: { fontSize: 24, color: "white", fontWeight: "bold", marginBottom: 20 },
+  logoutButton: {
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: "#47A138",
+  },
+  logoutText: { color: "white", fontWeight: "bold" },
 });

@@ -11,16 +11,15 @@ import {
   Image,
   Alert,
 } from "react-native";
-// se quiser Redux, pode importar aqui:
-// import { useDispatch } from "react-redux";
-// import { updateUser } from "../../redux/userSlice";
 
 interface LoginModalProps {
   visible: boolean;
   onClose: () => void;
+  onLoginSuccess: (user: User) => void; // nova prop
 }
 
-export default function LoginModal({ visible, onClose }: LoginModalProps) {
+
+export default function LoginModal({ visible, onClose, onLoginSuccess }: LoginModalProps) {
   const [formData, setFormData] = useState({ email: "", password: "" });
 
   const handleChangeFormData = (field: string, text: string) => {
@@ -44,22 +43,16 @@ export default function LoginModal({ visible, onClose }: LoginModalProps) {
           usuario.password == formData.password
       );
 
-      if (usuario.length > 0) {
-        alert("Login realizado com sucesso!");
-        onClose();
-
-        //TODO TRAZER O REDUX AQUI
-        //dispatch(updateUser({ name: usuario[0].userName, email: usuario[0].email, id: usuario[0].id }));
-        console.log(usuario[0]);
-
-        //UTILIZAR O NAVIGATION AO INVÉS DE REDIRECT
-        //redirect(`/financeiro/pageUser/id=${usuario[0].id}`);
-      } else {
-        alert("Erro verifique usuário e senha");
-      }
-    } else {
-      alert("Erro ao conectar com servidor");
-  }
+     // Dentro do handleSubmit
+        if (usuario.length > 0) {
+          alert("Login realizado com sucesso!");
+          onLoginSuccess(usuario[0]); // chama a função para atualizar a home
+        } else {
+          alert("Erro verifique usuário e senha");
+        }
+            } else {
+              alert("Erro ao conectar com servidor");
+          }
   };
 
   return (
