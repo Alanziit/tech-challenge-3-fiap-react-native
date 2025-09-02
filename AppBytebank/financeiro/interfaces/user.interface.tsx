@@ -1,4 +1,5 @@
 export interface User {
+    saldo: any;
     id:number,
     userName?: string,
     email?: string,

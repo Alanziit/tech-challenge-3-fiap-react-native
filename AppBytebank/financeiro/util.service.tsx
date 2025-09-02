@@ -1,60 +1,81 @@
-export async function getUserById(id: number) : Promise<Response | null> {
-  const response = await fetch(`http://localhost:4000/usuarios?id=${id}`);
+// api.ts
+// Base URL para web e mobile
+const isWeb = typeof document !== "undefined";
+const LOCAL_IP = "192.168.1.17"; // IP da sua máquina na rede
+const BASE_URL = isWeb ? "http://localhost:4000" : `http://${LOCAL_IP}:4000`;
 
-  if (response.ok) {
-    const user = await response.json();
-
-    return user[0];
+// Usuários
+export async function getUserById(id: number): Promise<any | null> {
+  try {
+    const response = await fetch(`${BASE_URL}/usuarios?id=${id}`);
+    if (response.ok) {
+      const users = await response.json();
+      return users[0] || null;
+    }
+  } catch (error) {
+    console.error("[API] getUserById erro:", error);
   }
-
   return null;
 }
 
-export async function getUsers(): Promise<Response> {
-  return await fetch("http://localhost:4000/usuarios");
+export async function getUsers(): Promise<any> {
+  try {
+    return await fetch(`${BASE_URL}/usuarios`);
+  } catch (error) {
+    console.error("[API] getUsers erro:", error);
+    throw error;
+  }
 }
 
-export async function createUser(data:any) {
-  return await fetch('http://localhost:4000/usuarios',{
+export async function createUser(data: any): Promise<Response> {
+  try {
+    return await fetch(`${BASE_URL}/usuarios`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+  } catch (error) {
+    console.error("[API] createUser erro:", error);
+    throw error;
+  }
 }
 
-export async function getAccountUserById(id:number): Promise<Response | null> {
-  const response = await fetch(`http://localhost:4000/contas?id=${id}`);
-
-  if (response.ok) {
-    const account = await response.json();
-
-    return account[0];
+// Contas
+export async function getAccountUserById(id: number): Promise<any | null> {
+  try {
+    const response = await fetch(`${BASE_URL}/contas?id=${id}`);
+    if (response.ok) {
+      const accounts = await response.json();
+      return accounts[0] || null;
+    }
+  } catch (error) {
+    console.error("[API] getAccountUserById erro:", error);
   }
-
   return null;
 }
 
-export async function updateAccountById(id:number,account:any) : Promise<Response> {
-  return await fetch(`http://localhost:4000/contas/${id}`,{
+export async function updateAccountById(id: number, account: any): Promise<Response> {
+  try {
+    return await fetch(`${BASE_URL}/contas/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(account),
     });
+  } catch (error) {
+    console.error("[API] updateAccountById erro:", error);
+    throw error;
+  }
 }
 
-export async function createAccount(account:any) : Promise<Response> {
-  return await fetch('http://localhost:4000/contas',{
+export async function createAccount(account: any): Promise<Response> {
+  try {
+    return await fetch(`${BASE_URL}/contas`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(account),
     });
+  } catch (error) {
+    console.error("[API] createAccount erro:", error);
+    throw error;
+  }
 }
