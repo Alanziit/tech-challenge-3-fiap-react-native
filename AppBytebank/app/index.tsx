@@ -12,13 +12,15 @@ import {
 } from "react-native";
 import { User } from "@/financeiro/interfaces/user.interface";
 import UserHome from "@/components/UserHome/UserHome";
+import Loading from "@/components/Loading/Loading";
 
 export default function Index() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(Dimensions.get("window").width);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalRegisterOpen, setIsModalRegisterOpen] = useState(false);
-  const [loggedUser, setLoggedUser] = useState<User | null>(null); // Usuário logado
+  const [loggedUser, setLoggedUser] = useState<User | null>(null);
+  const [isLoading, setLoading] = useState(false);
 
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
@@ -31,9 +33,18 @@ export default function Index() {
 
   // Função chamada pelo LoginModal quando o login for bem-sucedido
   const handleLoginSuccess = (user: User) => {
-    setLoggedUser(user); // Atualiza o estado do usuário logado
-    setIsModalOpen(false); // Fecha o modal
-  };
+    setLoading(true); 
+    setIsModalOpen(false);
+
+    setTimeout(() => {
+    setLoggedUser(user);
+    setLoading(false);
+  }, 1500); 
+};
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   // Tela principal quando o usuário está logado
   if (loggedUser) {
@@ -42,11 +53,13 @@ export default function Index() {
         user={loggedUser}
         onLogout={() => setLoggedUser(null)}
       />
+      
     );
   }
 
   // Tela padrão (home) quando não há usuário logado
   return (
+    
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
