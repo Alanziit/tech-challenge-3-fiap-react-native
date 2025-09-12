@@ -1,8 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { User } from "@/financeiro/interfaces/user.interface";
-
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import BottomMenu from "../BotaoMenu/botaoMenu";
+import TransactionBlock from "../TransacaoBloco/Transacaobloco";
+import ExtratoCard from "../ExtratoCard/ExtratoCard";
+
 interface UserHomeProps {
   user: User;
   onLogout: () => void;
@@ -10,6 +13,7 @@ interface UserHomeProps {
 
 export default function UserHome({ user, onLogout }: UserHomeProps) {
   const [isBalanceVisible, setIsBalanceVisible] = useState(false);
+  const [selectedScreen, setSelectedScreen] = useState<"home" | "extrato">("home");
 
   const toggleBalanceVisibility = () => setIsBalanceVisible(!isBalanceVisible);
 
@@ -25,37 +29,54 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
   };
 
   return (
-    <View style={styles.balanceCard}>
-      <Text style={styles.greeting}>Olá, {user.userName}! :)</Text>
-      <Text style={styles.date}>{getCurrentDate()}</Text>
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {selectedScreen === "home" ? (
+          <>
+            <View style={styles.balanceCard}>
+              <Text style={styles.greeting}>Olá, {user.userName}! :)</Text>
+              <Text style={styles.date}>{getCurrentDate()}</Text>
 
+              <View style={styles.balanceInfo}>
+                <Text style={styles.balanceLabel}>Saldo</Text>
+                <TouchableOpacity onPress={toggleBalanceVisibility}>
+                  <Text style={styles.eyeIcon}>
+                    {isBalanceVisible ? <FaEye /> : <FaEyeSlash />}
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
+              <Text style={styles.contaCorrente}>Conta Corrente</Text>
+              <Text style={styles.valorSaldo}>
+                {isBalanceVisible
+                  ? `R$ ${
+                      user.saldo?.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }) ?? "0,00"
+                    }`
+                  : "●●●,●●"}
+              </Text>
+            </View>
 
-    <View style={styles.balanceInfo}>
-        <Text style={styles.balanceLabel}>Saldo</Text>
-        <TouchableOpacity onPress={toggleBalanceVisibility}>
-            <Text style={styles.eyeIcon}>{isBalanceVisible ? <FaEye /> : <FaEyeSlash />}</Text>
-        </TouchableOpacity>
-    </View>
+            {/* Bloco de transações */}
+            <TransactionBlock user={user} />
+          </>
+        ) : (
+          <ExtratoCard />
+        )}
+      </ScrollView>
 
-      <Text style={styles.contaCorrente}>Conta Corrente</Text>
-      <Text style={styles.valorSaldo}>
-        {isBalanceVisible
-          ? `R$ ${user.saldo?.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }) ?? "0,00"}`
-          : "●●●,●●"}
-      </Text>
-
-      <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
-        <Text style={styles.logoutText}>Sair</Text>
-      </TouchableOpacity>
+      {/* Menu no rodapé */}
+      <BottomMenu onLogout={onLogout} onNavigate={setSelectedScreen} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 100,
+  },
   balanceCard: {
     backgroundColor: "#007B7F",
     borderRadius: 8,
@@ -102,17 +123,5 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "400",
     color: "white",
-  },
-  logoutButton: {
-    marginTop: 30,
-    backgroundColor: "#47A138",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  logoutText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 16,
   },
 });
