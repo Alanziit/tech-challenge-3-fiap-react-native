@@ -7,6 +7,10 @@ import {
   FlatList,
   ActivityIndicator,
 } from "react-native";
+import { getAccountUserById } from "@/financeiro/util.service";
+import { useSelector } from "react-redux";
+import { User } from "@/financeiro/interfaces/user.interface";
+import { getMonthName, getformattedDate } from "../../shared/date-utils";
 
 interface Transacao {
   id: string;
@@ -16,30 +20,33 @@ interface Transacao {
 }
 
 export default function ExtratoCard() {
+  const user = useSelector((state: { user: User }) => state.user);
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [loading, setLoading] = useState(true);
+  const [account, setAccount] = useState({
+    id: "",
+    userName: "",
+    saldo: 0,
+    extrato: [],
+  });
 
-  // Simulação de carregamento de dados (sem redux)
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Exemplo mockado, troque pelo fetch no json-server ou API
-        const data: Transacao[] = [
-          { id: "1", tipo: "Depósito", valor: 500, data: "2025-09-10" },
-          { id: "2", tipo: "Saque", valor: -200, data: "2025-09-11" },
-        ];
+    getAccountUserById(user.id).then((data) => {
+      if (data) {
         setTimeout(() => {
-          setTransacoes(data);
+          const transacoes: Transacao[] = data.extrato.map((item: any) => ({
+            id: item.id,
+            tipo: item.tipo,
+            valor: item.valor,
+            data: item.data,
+          }));
+          setTransacoes(transacoes);
           setLoading(false);
         }, 1000);
-      } catch (err) {
-        console.log("Erro ao carregar extrato:", err);
-        setLoading(false);
       }
-    };
-
-    fetchData();
-  }, []);
+    });
+  }, [user.id]);
 
   if (loading) {
     return (
@@ -58,16 +65,29 @@ export default function ExtratoCard() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Text style={styles.tipo}>{item.tipo}</Text>
-            <Text
-              style={[
-                styles.valor,
-                { color: item.valor >= 0 ? "green" : "red" },
-              ]}
-            >
-              {item.valor >= 0 ? `+ R$ ${item.valor}` : `- R$ ${Math.abs(item.valor)}`}
-            </Text>
-            <Text style={styles.data}>{item.data}</Text>
+            <View style={styles.cardContent}>
+              <View>
+                <Text style={styles.tipo}>{item.tipo}</Text>
+                <Text
+                  style={[
+                    styles.valor,
+                    { color: item.valor >= 0 ? "#47A138" : "#b52626" },
+                  ]}
+                >
+                  {item.valor >= 0
+                    ? `+ R$ ${item.valor}`
+                    : `- R$ ${Math.abs(item.valor)}`}
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.data}>
+                  {getMonthName(new Date(item.data))}
+                </Text>
+                <Text style={styles.data}>
+                  {getformattedDate(new Date(item.data))}
+                </Text>
+              </View>
+            </View>
           </View>
         )}
       />
@@ -82,20 +102,25 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
     elevation: 2,
+    margin: 20,
   },
   title: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: "700",
     marginBottom: 12,
     textAlign: "center",
   },
   card: {
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: "space-between",
     backgroundColor: "#f9f9f9",
     padding: 12,
     marginVertical: 6,
     borderRadius: 8,
+  },
+  cardContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   tipo: {
     fontSize: 16,

@@ -13,6 +13,8 @@ import {
 import { User } from "@/financeiro/interfaces/user.interface";
 import UserHome from "@/components/UserHome/UserHome";
 import Loading from "@/components/Loading/Loading";
+import { Provider } from "react-redux";
+import store from "../../AppBytebank/redux/store";
 
 export default function Index() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -49,17 +51,19 @@ export default function Index() {
   // Tela principal quando o usuário está logado
   if (loggedUser) {
     return (
+      
       <UserHome
         user={loggedUser}
         onLogout={() => setLoggedUser(null)}
       />
+     
       
     );
   }
 
   // Tela padrão (home) quando não há usuário logado
   return (
-    
+    <Provider store={store}>
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -215,6 +219,7 @@ export default function Index() {
         onClose={() => setIsModalRegisterOpen(false)}
       />
     </View>
+    </Provider>
   );
 }
 

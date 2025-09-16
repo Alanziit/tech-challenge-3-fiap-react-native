@@ -9,8 +9,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  Alert,
 } from "react-native";
+import { useDispatch } from "react-redux";
+import { updateUser } from "../../redux/userSlice";
 
 interface LoginModalProps {
   visible: boolean;
@@ -20,6 +21,7 @@ interface LoginModalProps {
 
 
 export default function LoginModal({ visible, onClose, onLoginSuccess }: LoginModalProps) {
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({ email: "", password: "" });
 
   const handleChangeFormData = (field: string, text: string) => {
@@ -45,13 +47,14 @@ export default function LoginModal({ visible, onClose, onLoginSuccess }: LoginMo
 
      // Dentro do handleSubmit
         if (usuario.length > 0) {
-          alert("Login realizado com sucesso!");
+          console.log("Login realizado com sucesso!");
+          dispatch(updateUser({ name: usuario[0].userName, email: usuario[0].email, id: usuario[0].id }));
           onLoginSuccess(usuario[0]); // chama a função para atualizar a home
         } else {
-          alert("Erro verifique usuário e senha");
+          console.log("Erro verifique usuário e senha");
         }
             } else {
-              alert("Erro ao conectar com servidor");
+              console.log("Erro ao conectar com servidor");
           }
   };
 
