@@ -1,7 +1,7 @@
 // api.ts
 // Base URL para web e mobile
 const isWeb = typeof document !== "undefined";
-const LOCAL_IP = "192.168.1.17"; // IP da sua máquina na rede
+const LOCAL_IP = "193.186.4.237"; // IP da sua máquina na rede
 const BASE_URL = isWeb ? "http://localhost:4000" : `http://${LOCAL_IP}:4000`;
 
 // Usuários

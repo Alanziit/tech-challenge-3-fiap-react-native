@@ -23,7 +23,7 @@ export default function RegisterModal({ visible, onClose }: RegisterModalProps) 
     email: "",
     password: "",
     terms: false,
-    id: 0,
+    id: "",
     dataCriacao: new Date(),
   });
 
@@ -34,7 +34,7 @@ export default function RegisterModal({ visible, onClose }: RegisterModalProps) 
   const handleAccount = async () => {
     const novaContaUsuario: Account = {
         userName: formData.userName,
-        id: Number(formData.id),
+        id: formData.id,
         dataCriacao: formData.dataCriacao,
         saldo: 0,
         extrato: [],
@@ -57,7 +57,7 @@ export default function RegisterModal({ visible, onClose }: RegisterModalProps) 
 
       const idUsuario =
         usuarios.length > 0 ? parseInt(usuarios[usuarios.length - 1].id) + 1 : 1;
-      formData.id = idUsuario;
+      formData.id = idUsuario.toString();
     }
 
     const response = await createUser(formData);

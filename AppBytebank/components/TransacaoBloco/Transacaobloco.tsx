@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { User } from "@/financeiro/interfaces/user.interface";
+import { getAccountUserById, getUserById, updateAccountById } from "@/financeiro/util.service";
 
 interface TransactionBlockProps {
   user: User;
@@ -20,8 +21,38 @@ export default function TransactionBlock({ user }: TransactionBlockProps) {
   const [valorTransacao, setValorTransacao] = useState(""); // valor numérico
   const [valorFormatado, setValorFormatado] = useState(""); // exibição formatada
   const [senhaDigitada, setSenhaDigitada] = useState("");
-  const [senhaCorreta] = useState(user.password ?? "123456"); // aqui você pode ajustar a origem da senha
+  const [senhaCorreta,setSenhaCorreta] = useState(user.password ?? "123456"); // aqui você pode ajustar a origem da senha
   const [showModal, setShowModal] = useState(false);
+  const [erroTransacao, setErroTransacao] = useState(false);
+  const [account, setAccount] = useState({
+    userName: "",
+    saldo: 0,
+    extrato: [],
+  });
+
+  useEffect(() => {
+    getAccountUserById(user.id).then((data) => {
+      if (data) {
+        setAccount({
+          userName: data.userName,
+          saldo: data.saldo,
+          extrato: data.extrato,
+        });
+      }
+    });
+
+    getUserById(user.id).then((user) => {
+      if (user && user.password) {
+        setSenhaCorreta(user.password);
+      }
+    });
+    
+  }, [user.id]);
+
+
+
+
+
   const [mensagemModal, setMensagemModal] = useState(
     "Para concluir a transação, insira a senha cadastrada no login."
   );
@@ -55,7 +86,7 @@ export default function TransactionBlock({ user }: TransactionBlockProps) {
     setSenhaDigitada("");
   };
 
-  const confirmarTransacao = () => {
+  const confirmarTransacao = async () => {
     if (senhaDigitada !== senhaCorreta) {
       setMensagemModal("Senha incorreta. Tente novamente.");
       return;
@@ -68,12 +99,37 @@ export default function TransactionBlock({ user }: TransactionBlockProps) {
       return;
     }
 
-    setMensagemModal("Transação concluída com sucesso!");
-    setTransacaoFinalizada(true);
+    const novaTransacao = {
+      tipo: transactionType,
+      valor,
+      data: new Date().toISOString(),
+      codigoTransacao: Math.floor(Math.random() * 100000),
+    };
 
-    setTimeout(() => {
-      setShowModal(false);
-    }, 2000);
+    const novoSaldo =
+      transactionType === "Depósito"
+        ? account.saldo + valor
+        : account.saldo - valor;
+
+    const novaConta = {
+      ...account,
+      saldo: novoSaldo,
+      extrato: [...account.extrato, novaTransacao],
+    };
+
+    const response = await updateAccountById(user.id, novaConta);
+
+    if (response.ok) {
+      setMensagemModal("Transação concluída com sucesso!");
+      setErroTransacao(false);
+      setTransacaoFinalizada(true);
+      setTimeout(() => {
+        setShowModal(false);
+      }, 2000);
+    } else {
+      setMensagemModal("Erro ao processar a transação.");
+      setErroTransacao(true);
+    }
   };
 
   return (

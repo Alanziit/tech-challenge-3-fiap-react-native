@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { User } from "@/financeiro/interfaces/user.interface";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import BottomMenu from "../BotaoMenu/botaoMenu";
 import TransactionBlock from "../TransacaoBloco/Transacaobloco";
 import ExtratoCard from "../ExtratoCard/ExtratoCard";
+import { getAccountUserById } from "@/financeiro/util.service";
+import { Provider } from "react-redux";
+import store from "./../../redux/store";
 
 interface UserHomeProps {
   user: User;
@@ -14,8 +17,26 @@ interface UserHomeProps {
 export default function UserHome({ user, onLogout }: UserHomeProps) {
   const [isBalanceVisible, setIsBalanceVisible] = useState(false);
   const [selectedScreen, setSelectedScreen] = useState<"home" | "extrato">("home");
+  const [account, setAccount] = useState({
+    userName: "",
+    saldo: 0,
+    extrato: [],
+  });
 
   const toggleBalanceVisibility = () => setIsBalanceVisible(!isBalanceVisible);
+
+  useEffect(() => {
+    getAccountUserById(user.id).then((data) => {
+      if (data) {
+        setAccount({
+          userName: data.userName,
+          saldo: data.saldo,
+          extrato: data.extrato,
+        });
+      }
+    });
+  }, [user.id]);
+    
 
   const getCurrentDate = () => {
     const now = new Date();
@@ -29,7 +50,7 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1,backgroundColor: '#E4EDE3' }}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {selectedScreen === "home" ? (
           <>
@@ -50,7 +71,7 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
               <Text style={styles.valorSaldo}>
                 {isBalanceVisible
                   ? `R$ ${
-                      user.saldo?.toLocaleString("pt-BR", {
+                      account.saldo?.toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       }) ?? "0,00"
@@ -63,7 +84,9 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
             <TransactionBlock user={user} />
           </>
         ) : (
+          <Provider store={store}>
           <ExtratoCard />
+          </Provider>
         )}
       </ScrollView>
 

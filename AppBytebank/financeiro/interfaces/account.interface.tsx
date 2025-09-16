@@ -1,7 +1,7 @@
 import { Extract } from "./extrato.interface";
 
 export interface Account {
-    id:number,
+    id:string,
     userName?: string,
     saldo?:number,
     extrato?:Array<Extract>
