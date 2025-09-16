@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 interface BottomMenuProps {
   onLogout: () => void;
-  onNavigate: (screen: "home" | "extrato") => void;
+  onNavigate: (screen: "home" | "extrato"| "services") => void;
 }
 
 export default function BottomMenu({ onLogout, onNavigate }: BottomMenuProps) {
@@ -20,10 +20,16 @@ export default function BottomMenu({ onLogout, onNavigate }: BottomMenuProps) {
         <Text style={styles.menuText}>Extrato</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuItem}>
-        <Ionicons name="card-outline" size={24} color="white" />
-        <Text style={styles.menuText}>Cartões</Text>
-      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.menuItem}
+        onPress={() => {
+          onNavigate("services");
+        }}
+          >
+      <Ionicons name="card-outline" size={24} color="white" />
+      <Text style={styles.menuText}>Outros serviços</Text>
+    </TouchableOpacity>
+
 
       <TouchableOpacity style={styles.menuItem}>
         <Ionicons name="trending-up-outline" size={24} color="white" />

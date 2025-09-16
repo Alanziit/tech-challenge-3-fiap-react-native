@@ -14,14 +14,15 @@ import { getAccountUserById, getUserById, updateAccountById } from "@/financeiro
 
 interface TransactionBlockProps {
   user: User;
+  onTransacaoSucesso?: () => void;
 }
 
-export default function TransactionBlock({ user }: TransactionBlockProps) {
+export default function TransactionBlock({ user, onTransacaoSucesso }: TransactionBlockProps) {
   const [transactionType, setTransactionType] = useState("");
-  const [valorTransacao, setValorTransacao] = useState(""); // valor numérico
-  const [valorFormatado, setValorFormatado] = useState(""); // exibição formatada
+  const [valorTransacao, setValorTransacao] = useState("");
+  const [valorFormatado, setValorFormatado] = useState("");
   const [senhaDigitada, setSenhaDigitada] = useState("");
-  const [senhaCorreta,setSenhaCorreta] = useState(user.password ?? "123456"); // aqui você pode ajustar a origem da senha
+  const [senhaCorreta, setSenhaCorreta] = useState(user.password ?? "123456");
   const [showModal, setShowModal] = useState(false);
   const [erroTransacao, setErroTransacao] = useState(false);
   const [account, setAccount] = useState({
@@ -46,12 +47,7 @@ export default function TransactionBlock({ user }: TransactionBlockProps) {
         setSenhaCorreta(user.password);
       }
     });
-    
   }, [user.id]);
-
-
-
-
 
   const [mensagemModal, setMensagemModal] = useState(
     "Para concluir a transação, insira a senha cadastrada no login."
@@ -123,6 +119,11 @@ export default function TransactionBlock({ user }: TransactionBlockProps) {
       setMensagemModal("Transação concluída com sucesso!");
       setErroTransacao(false);
       setTransacaoFinalizada(true);
+
+      if (onTransacaoSucesso) {
+        onTransacaoSucesso();
+      }
+
       setTimeout(() => {
         setShowModal(false);
       }, 2000);
@@ -136,15 +137,15 @@ export default function TransactionBlock({ user }: TransactionBlockProps) {
     <View style={styles.blocoTransacao}>
       <Text style={styles.titulo}>Nova Transação</Text>
 
-    <Picker
+      <Picker
         selectedValue={transactionType}
         onValueChange={(itemValue: string) => setTransactionType(itemValue)}
         style={styles.picker}
-    >
+      >
         <Picker.Item label="Selecione o tipo de transação" value="" />
         <Picker.Item label="Saque" value="Saque" />
         <Picker.Item label="DOC/TED" value="Depósito" />
-    </Picker>
+      </Picker>
 
       <TextInput
         style={styles.input}
