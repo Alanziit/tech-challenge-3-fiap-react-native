@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
+import React, { useEffect, useState, useRef } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ActivityIndicator } from "react-native";
 import { User } from "@/financeiro/interfaces/user.interface";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import BottomMenu from "../BotaoMenu/botaoMenu";
@@ -16,16 +16,23 @@ interface UserHomeProps {
 
 export default function UserHome({ user, onLogout }: UserHomeProps) {
   const [isBalanceVisible, setIsBalanceVisible] = useState(false);
-  const [selectedScreen, setSelectedScreen] = useState<"home" | "extrato">("home");
+  const [selectedScreen, setSelectedScreen] = useState<"home" | "extrato" | "services">("home");
+
   const [account, setAccount] = useState({
     userName: "",
     saldo: 0,
     extrato: [],
   });
 
+  const [atualizandoSaldo, setAtualizandoSaldo] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  // Novo estado para controlar renderização dos botões
+  const [showServices, setShowServices] = useState(false);
+
   const toggleBalanceVisibility = () => setIsBalanceVisible(!isBalanceVisible);
 
-  useEffect(() => {
+  const atualizarConta = () => {
     getAccountUserById(user.id).then((data) => {
       if (data) {
         setAccount({
@@ -35,8 +42,42 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
         });
       }
     });
+  };
+
+  useEffect(() => {
+    atualizarConta();
   }, [user.id]);
-    
+
+  useEffect(() => {
+    if (atualizandoSaldo) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(fadeAnim, { toValue: 0.3, duration: 500, useNativeDriver: true }),
+          Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+        ])
+      ).start();
+
+      const timer = setTimeout(() => {
+        setAtualizandoSaldo(false);
+        atualizarConta();
+        fadeAnim.setValue(1);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [atualizandoSaldo]);
+
+  useEffect(() => {
+    if (selectedScreen === "services") {
+      setShowServices(false); 
+      const timer = setTimeout(() => {
+        setShowServices(true); 
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowServices(false); 
+    }
+  }, [selectedScreen]);
 
   const getCurrentDate = () => {
     const now = new Date();
@@ -50,9 +91,9 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
   };
 
   return (
-    <View style={{ flex: 1,backgroundColor: '#E4EDE3' }}>
+    <View style={{ flex: 1, backgroundColor: "#E4EDE3" }}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {selectedScreen === "home" ? (
+        {selectedScreen === "home" && (
           <>
             <View style={styles.balanceCard}>
               <Text style={styles.greeting}>Olá, {user.userName}! :)</Text>
@@ -68,7 +109,7 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
               </View>
 
               <Text style={styles.contaCorrente}>Conta Corrente</Text>
-              <Text style={styles.valorSaldo}>
+              <Animated.Text style={[styles.valorSaldo, { opacity: fadeAnim }]}>
                 {isBalanceVisible
                   ? `R$ ${
                       account.saldo?.toLocaleString("pt-BR", {
@@ -77,20 +118,53 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
                       }) ?? "0,00"
                     }`
                   : "●●●,●●"}
-              </Text>
+              </Animated.Text>
             </View>
 
-            {/* Bloco de transações */}
-            <TransactionBlock user={user} />
+            <TransactionBlock user={user} onTransacaoSucesso={() => setAtualizandoSaldo(true)} />
           </>
-        ) : (
+        )}
+
+        {selectedScreen === "extrato" && (
           <Provider store={store}>
-          <ExtratoCard />
+            <ExtratoCard />
           </Provider>
+        )}
+
+        {selectedScreen === "services" && (
+          <View style={styles.servicesContainer}>
+            {showServices ? (
+              <>
+                <Text style={styles.servicesTitle}>Serviços Disponíveis</Text>
+                <TouchableOpacity style={styles.serviceButton}>
+                  <Text style={styles.serviceButtonText}>💰 Empréstimo</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.serviceButton}>
+                  <Text style={styles.serviceButtonText}>💳 Meus Cartões</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.serviceButton}>
+                  <Text style={styles.serviceButtonText}>🙏 Doações</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.serviceButton}>
+                  <Text style={styles.serviceButtonText}>⚡ Pix</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.serviceButton}>
+                  <Text style={styles.serviceButtonText}>🛡️ Seguros</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.serviceButton}>
+                  <Text style={styles.serviceButtonText}>📱 Crédito Celular</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={styles.loader}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+                <Text>Carregando serviços...</Text>
+              </View>
+            )}
+          </View>
         )}
       </ScrollView>
 
-      {/* Menu no rodapé */}
       <BottomMenu onLogout={onLogout} onNavigate={setSelectedScreen} />
     </View>
   );
@@ -146,5 +220,33 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "400",
     color: "white",
+  },
+  servicesContainer: {
+    margin: 20,
+    padding: 20,
+    backgroundColor: "rgba(0,0,0,0.00)",
+    borderRadius: 8,
+    elevation: 2,
+  },
+  servicesTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 15,
+    color: "#007B7F",
+  },
+  serviceButton: {
+    padding: 15,
+    backgroundColor: "#007B7F",
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  serviceButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  loader: {
+    marginTop: 50,
+    alignItems: "center",
   },
 });

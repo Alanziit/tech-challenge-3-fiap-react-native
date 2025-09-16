@@ -30,7 +30,6 @@ export default function ExtratoCard() {
     extrato: [],
   });
 
-
   useEffect(() => {
     getAccountUserById(user.id).then((data) => {
       if (data) {
@@ -63,33 +62,42 @@ export default function ExtratoCard() {
       <FlatList
         data={transacoes}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.cardContent}>
-              <View>
-                <Text style={styles.tipo}>{item.tipo}</Text>
-                <Text
-                  style={[
-                    styles.valor,
-                    { color: item.valor >= 0 ? "#47A138" : "#b52626" },
-                  ]}
-                >
-                  {item.valor >= 0
-                    ? `+ R$ ${item.valor}`
-                    : `- R$ ${Math.abs(item.valor)}`}
-                </Text>
-              </View>
-              <View>
-                <Text style={styles.data}>
-                  {getMonthName(new Date(item.data))}
-                </Text>
-                <Text style={styles.data}>
-                  {getformattedDate(new Date(item.data))}
-                </Text>
+        renderItem={({ item }) => {
+          // Ajuste para garantir que SAQUE seja sempre negativo
+          const isSaque = item.tipo === "Saque";
+          const valorExibido = isSaque
+            ? `- R$ ${Math.abs(item.valor)}`
+            : item.valor >= 0
+            ? `+ R$ ${item.valor}`
+            : `- R$ ${Math.abs(item.valor)}`;
+
+          const corValor = isSaque
+            ? "#b52626"
+            : item.valor >= 0
+            ? "#47A138"
+            : "#b52626";
+
+          return (
+            <View style={styles.card}>
+              <View style={styles.cardContent}>
+                <View>
+                  <Text style={styles.tipo}>{item.tipo}</Text>
+                  <Text style={[styles.valor, { color: corValor }]}>
+                    {valorExibido}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={styles.data}>
+                    {getMonthName(new Date(item.data))}
+                  </Text>
+                  <Text style={styles.data}>
+                    {getformattedDate(new Date(item.data))}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
-        )}
+          );
+        }}
       />
     </View>
   );
