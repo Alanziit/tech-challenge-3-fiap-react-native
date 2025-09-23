@@ -1,69 +1,57 @@
 // OutrosServicos.tsx
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from "react-native";
 import { useSelector } from "react-redux";
 import { User } from "@/financeiro/interfaces/user.interface";
+import TelaEmConstrucao from "../TelaEmConstrucao/TelaEmConstrucao";
 
 export default function OutrosServicos() {
-
   const user = useSelector((state: { user: User }) => state.user);
+  const [emConstrucao, setEmConstrucao] = useState(false);
+
+  if (emConstrucao) {
+    return <TelaEmConstrucao onVoltar={() => setEmConstrucao(false)} />;
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.servicesContainer}>
       <Text style={styles.tituloServicos}>Confira os serviços disponíveis</Text>
 
       <View style={styles.cardServices}>
-        <View style={styles.card}>
-          <Image
-            source={require("@/assets/icone_emprestimo.png")}
-            style={styles.icon}
-          />
+        <TouchableOpacity style={styles.card} onPress={() => setEmConstrucao(true)}>
+          <Image source={require("../../assets/images/icone_emprestimo.png")} style={styles.icon} />
           <Text style={styles.cardText}>Empréstimo</Text>
-        </View>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.card}>
-          <Image
-            source={require("@/assets/icone_cartao.png")}
-            style={styles.icon}
-          />
+          <Image source={require("../../assets/images/icone_cartao.png")} style={styles.icon} />
           <Text style={styles.cardText}>Meus Cartões</Text>
         </TouchableOpacity>
 
-        <View style={styles.card}>
-          <Image
-            source={require("@/assets/icone_doacao.png")}
-            style={styles.icon}
-          />
+        <TouchableOpacity style={styles.card} onPress={() => setEmConstrucao(true)}>
+          <Image source={require("../../assets/images/icone_doacao.png")} style={styles.icon} />
           <Text style={styles.cardText}>Doações</Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.card}>
-          <Image
-            source={require("@/assets/icone_pix.png")}
-            style={styles.icon}
-          />
+        <TouchableOpacity style={styles.card} onPress={() => setEmConstrucao(true)}>
+          <Image source={require("../../assets/images/icone_pix.png")} style={styles.icon} />
           <Text style={styles.cardText}>Pix</Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.card}>
-          <Image
-            source={require("@/assets/icone_seguros.png")}
-            style={styles.icon}
-          />
+        <TouchableOpacity style={styles.card} onPress={() => setEmConstrucao(true)}>
+          <Image source={require("../../assets/images/icone_seguros.png")} style={styles.icon} />
           <Text style={styles.cardText}>Seguros</Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.card}>
-          <Image
-            source={require("@/assets/icone_credito.png")}
-            style={styles.icon}
-          />
+        <TouchableOpacity style={styles.card} onPress={() => setEmConstrucao(true)}>
+          <Image source={require("../../assets/images/icone_credito.png")} style={styles.icon} />
           <Text style={styles.cardText}>Crédito Celular</Text>
-        </View>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   servicesContainer: {
