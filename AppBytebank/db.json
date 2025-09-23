@@ -46,11 +46,18 @@
         }
       ],
       "id": "1",
-      "documento": {
-        "documento": "documents/1/1758660705762.jpg",
-        "dataDocumento": "2025-09-23T20:52:16.547Z",
-        "codigo": 82529
-      }
+      "documento": [
+        {
+          "documento": "documents/1/1758662364799.jpg",
+          "dataDocumento": "2025-09-23T21:19:53.687Z",
+          "codigo": 57914
+        },
+        {
+          "documento": "documents/1/1758662606126.jpg",
+          "dataDocumento": "2025-09-23T21:23:34.448Z",
+          "codigo": 82529
+        }
+      ]
     }
   ]
 }
