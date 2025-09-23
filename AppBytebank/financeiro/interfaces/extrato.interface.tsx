@@ -3,4 +3,5 @@ export interface Extract{
     valor:number,
     data: Date,
     codigoTransacao:string
+
 }

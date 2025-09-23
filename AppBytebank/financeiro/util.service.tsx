@@ -57,7 +57,7 @@ export async function getAccountUserById(id: number): Promise<any | null> {
 export async function updateAccountById(id: number, account: any): Promise<Response> {
   try {
     return await fetch(`${BASE_URL}/contas/${id}`, {
-      method: "PUT",
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(account),
     });

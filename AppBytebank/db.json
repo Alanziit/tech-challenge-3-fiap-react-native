@@ -45,7 +45,12 @@
           "codigoTransacao": 12316
         }
       ],
-      "id": "1"
+      "id": "1",
+      "documento": {
+        "documento": "documents/1/1758660705762.jpg",
+        "dataDocumento": "2025-09-23T20:52:16.547Z",
+        "codigo": 82529
+      }
     }
   ]
 }

@@ -11,8 +11,9 @@ import store from "./../../redux/store";
 
 // import do novo componente de cartões
 import Cartoes from "../Cartoes/Cartoes";
-import Avatar from "../Avatar/Avatar";
+import Upload from "../Upload/Upload";
 import TelaEmConstrucao from "../TelaEmConstrucao/TelaEmConstrucao";
+import Toast from "react-native-toast-message";
 // import do novo componente de tela em construção
 
 
@@ -23,6 +24,7 @@ interface UserHomeProps {
 
 export default function UserHome({ user, onLogout }: UserHomeProps) {
   const [isBalanceVisible, setIsBalanceVisible] = useState(false);
+  const filePath = `images/${user.id}`;
   const [selectedScreen, setSelectedScreen] = useState<
     "home" | "extrato" | "services" | "cartoes" | "construcao"
   >("home");
@@ -99,13 +101,13 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#E4EDE3" }}>
+    <><View style={{ flex: 1, backgroundColor: "#E4EDE3" }}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {selectedScreen === "home" && (
           <>
-          <View style={styles.header}>
-            <Avatar></Avatar>
-          </View>
+            <View style={styles.header}>
+              <Upload imageUrl={require("../../assets/images/avatar.png")} filePath={filePath}></Upload>
+            </View>
             <View style={styles.balanceCard}>
               <Text style={styles.greeting}>Olá, {user.userName}! :)</Text>
               <Text style={styles.date}>{getCurrentDate()}</Text>
@@ -122,12 +124,10 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
               <Text style={styles.contaCorrente}>Conta Corrente</Text>
               <Animated.Text style={[styles.valorSaldo, { opacity: fadeAnim }]}>
                 {isBalanceVisible
-                  ? `R$ ${
-                      account.saldo?.toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }) ?? "0,00"
-                    }`
+                  ? `R$ ${account.saldo?.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }) ?? "0,00"}`
                   : "●●●,●●"}
               </Animated.Text>
             </View>
@@ -203,7 +203,7 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
       </ScrollView>
 
       <BottomMenu onLogout={onLogout} onNavigate={setSelectedScreen} />
-    </View>
+    </View><Toast /></>
   );
 }
 
