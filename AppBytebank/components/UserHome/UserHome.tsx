@@ -1,13 +1,19 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ActivityIndicator } from "react-native";
-import { User } from "@/financeiro/interfaces/user.interface";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ActivityIndicator, Image } from "react-native";
+import { User } from "../../financeiro/interfaces/user.interface";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import BottomMenu from "../BotaoMenu/botaoMenu";
 import TransactionBlock from "../TransacaoBloco/Transacaobloco";
 import ExtratoCard from "../ExtratoCard/ExtratoCard";
-import { getAccountUserById } from "@/financeiro/util.service";
+import { getAccountUserById } from "../../financeiro/util.service";
 import { Provider } from "react-redux";
 import store from "./../../redux/store";
+
+// import do novo componente de cartões
+import Cartoes from "../Cartoes/Cartoes";
+import TelaEmConstrucao from "../TelaEmConstrucao/TelaEmConstrucao";
+// import do novo componente de tela em construção
+
 
 interface UserHomeProps {
   user: User;
@@ -16,7 +22,9 @@ interface UserHomeProps {
 
 export default function UserHome({ user, onLogout }: UserHomeProps) {
   const [isBalanceVisible, setIsBalanceVisible] = useState(false);
-  const [selectedScreen, setSelectedScreen] = useState<"home" | "extrato" | "services">("home");
+  const [selectedScreen, setSelectedScreen] = useState<
+    "home" | "extrato" | "services" | "cartoes" | "construcao"
+  >("home");
 
   const [account, setAccount] = useState({
     userName: "",
@@ -27,7 +35,6 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
   const [atualizandoSaldo, setAtualizandoSaldo] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  // Novo estado para controlar renderização dos botões
   const [showServices, setShowServices] = useState(false);
 
   const toggleBalanceVisibility = () => setIsBalanceVisible(!isBalanceVisible);
@@ -69,13 +76,13 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
 
   useEffect(() => {
     if (selectedScreen === "services") {
-      setShowServices(false); 
+      setShowServices(false);
       const timer = setTimeout(() => {
-        setShowServices(true); 
+        setShowServices(true);
       }, 1000);
       return () => clearTimeout(timer);
     } else {
-      setShowServices(false); 
+      setShowServices(false);
     }
   }, [selectedScreen]);
 
@@ -136,22 +143,40 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
             {showServices ? (
               <>
                 <Text style={styles.servicesTitle}>Serviços Disponíveis</Text>
-                <TouchableOpacity style={styles.serviceButton}>
+                <TouchableOpacity
+                  style={styles.serviceButton}
+                  onPress={() => setSelectedScreen("construcao")}
+                >
                   <Text style={styles.serviceButtonText}>💰 Empréstimo</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.serviceButton}>
+                <TouchableOpacity
+                  style={styles.serviceButton}
+                  onPress={() => setSelectedScreen("cartoes")}
+                >
                   <Text style={styles.serviceButtonText}>💳 Meus Cartões</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.serviceButton}>
+                <TouchableOpacity
+                  style={styles.serviceButton}
+                  onPress={() => setSelectedScreen("construcao")}
+                >
                   <Text style={styles.serviceButtonText}>🙏 Doações</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.serviceButton}>
+                <TouchableOpacity
+                  style={styles.serviceButton}
+                  onPress={() => setSelectedScreen("construcao")}
+                >
                   <Text style={styles.serviceButtonText}>⚡ Pix</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.serviceButton}>
+                <TouchableOpacity
+                  style={styles.serviceButton}
+                  onPress={() => setSelectedScreen("construcao")}
+                >
                   <Text style={styles.serviceButtonText}>🛡️ Seguros</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.serviceButton}>
+                <TouchableOpacity
+                  style={styles.serviceButton}
+                  onPress={() => setSelectedScreen("construcao")}
+                >
                   <Text style={styles.serviceButtonText}>📱 Crédito Celular</Text>
                 </TouchableOpacity>
               </>
@@ -162,6 +187,14 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
               </View>
             )}
           </View>
+        )}
+
+        {selectedScreen === "cartoes" && (
+          <Cartoes />
+        )}
+
+        {selectedScreen === "construcao" && (
+          <TelaEmConstrucao onVoltar={() => setSelectedScreen("services")} />
         )}
       </ScrollView>
 
