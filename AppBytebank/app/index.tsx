@@ -16,6 +16,7 @@ import Loading from "@/components/Loading/Loading";
 import { Provider } from "react-redux";
 import store from "../../AppBytebank/redux/store";
 
+
 export default function Index() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(Dimensions.get("window").width);

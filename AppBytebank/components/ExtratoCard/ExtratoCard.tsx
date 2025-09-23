@@ -5,22 +5,30 @@ import {
   Text,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
-import { getAccountUserById } from "@/financeiro/util.service";
+import {
+  getAccountUserById,
+  updateAccountById,
+} from "@/financeiro/util.service";
 import { useSelector } from "react-redux";
 import { User } from "@/financeiro/interfaces/user.interface";
 import { getMonthName, getformattedDate } from "../../shared/date-utils";
+import Upload from "../Upload/Upload";
+import Loader from "../Loader/Loader";
+import { Documento } from "../../financeiro/interfaces/documento.interface";
 
 interface Transacao {
   id: string;
   tipo: string;
   valor: number;
   data: string;
+  codigoTransacao?: string;
 }
 
 export default function ExtratoCard() {
   const user = useSelector((state: { user: User }) => state.user);
+  const filePath = `documents/${user.id}/${Date.now()}.jpg`;
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [account, setAccount] = useState({
@@ -28,7 +36,26 @@ export default function ExtratoCard() {
     userName: "",
     saldo: 0,
     extrato: [],
+    documento: undefined as Documento | undefined,
   });
+
+  const handleExtract = async (codigoTransacao: any) => {
+    const documento = {
+      documento: filePath,
+      dataDocumento: new Date(),
+      codigo: codigoTransacao,
+    };
+
+    const account = {
+      documento: documento,
+    };
+    const response = await updateAccountById(user.id, account);
+    if (response) {
+      console.log("Documento atualizado com sucesso:", response);
+    } else {
+      console.log("Erro ao atualizar documento");
+    }
+  };
 
   useEffect(() => {
     getAccountUserById(user.id).then((data) => {
@@ -39,7 +66,9 @@ export default function ExtratoCard() {
             tipo: item.tipo,
             valor: item.valor,
             data: item.data,
+            codigoTransacao: item.codigoTransacao,
           }));
+          setAccount(data);
           setTransacoes(transacoes);
           setLoading(false);
         }, 1000);
@@ -48,12 +77,7 @@ export default function ExtratoCard() {
   }, [user.id]);
 
   if (loading) {
-    return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#4CAF50" />
-        <Text>Carregando extrato...</Text>
-      </View>
-    );
+    return <Loader message={"Carregando extrato..."} size={"large"}></Loader>;
   }
 
   return (
@@ -94,6 +118,40 @@ export default function ExtratoCard() {
                     {getformattedDate(new Date(item.data))}
                   </Text>
                 </View>
+                <TouchableOpacity>
+                  <Upload
+                    imageUrl={require("../../assets/images/upload-icon.svg")}
+                    filePath={filePath}
+                    message={"Documento enviado com sucesso!"}
+                    onPress={() => handleExtract(item.codigoTransacao)}
+                  ></Upload>
+                </TouchableOpacity>
+              </View>
+              <View>
+                {item.codigoTransacao == account.documento?.codigo && (
+                  <>
+                    <View style={styles.documentContent}>
+                      <Text style={styles.subTitle}>Documento:</Text>
+                      <Text style={styles.data}>
+                        {account.documento?.documento
+                          ? account.documento?.documento.split("/").pop()
+                          : "-"}
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.documentContent}>
+                          <Text style={styles.subTitle}>Enviado em: </Text>
+                    <Text style={styles.data}>
+                      {account.documento?.dataDocumento
+                        ? getformattedDate(
+                            new Date(account.documento?.dataDocumento)
+                          )
+                        : "-"}
+                    </Text>
+                    </View>
+                    
+                  </>
+                )}
               </View>
             </View>
           );
@@ -118,6 +176,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: "center",
   },
+  subTitle:{
+    fontSize: 14,
+    fontWeight: "400",
+    color: "#007B7F",
+  },
   card: {
     flexDirection: "column",
     justifyContent: "space-between",
@@ -125,6 +188,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginVertical: 6,
     borderRadius: 8,
+    gap: 25,
   },
   cardContent: {
     flexDirection: "row",
@@ -145,5 +209,9 @@ const styles = StyleSheet.create({
   loader: {
     marginTop: 20,
     alignItems: "center",
+  },
+  documentContent: {
+    flexDirection: "row",
+    gap: 5,
   },
 });
