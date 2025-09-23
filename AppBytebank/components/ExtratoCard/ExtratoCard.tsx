@@ -36,8 +36,9 @@ export default function ExtratoCard() {
     userName: "",
     saldo: 0,
     extrato: [],
-    documento: undefined as Documento | undefined,
+    documento: undefined as Documento[] | undefined,
   });
+  const [documento, setDocumento] = useState<Documento | undefined>(undefined);
 
   const handleExtract = async (codigoTransacao: any) => {
     const documento = {
@@ -46,15 +47,23 @@ export default function ExtratoCard() {
       codigo: codigoTransacao,
     };
 
-    const account = {
-      documento: documento,
-    };
+    account.documento?.push(documento);
+    
     const response = await updateAccountById(user.id, account);
     if (response) {
       console.log("Documento atualizado com sucesso:", response);
     } else {
       console.log("Erro ao atualizar documento");
     }
+  };
+
+  const getCodigoTransacao = (codigo: any): boolean => {
+    const resp = account.documento?.find((d) => d.codigo === codigo);
+    if (resp) {
+      setDocumento(resp);
+      return true;
+    }
+    return false;
   };
 
   useEffect(() => {
@@ -128,28 +137,25 @@ export default function ExtratoCard() {
                 </TouchableOpacity>
               </View>
               <View>
-                {item.codigoTransacao == account.documento?.codigo && (
+                {getCodigoTransacao(item.codigoTransacao) && (
                   <>
                     <View style={styles.documentContent}>
                       <Text style={styles.subTitle}>Documento:</Text>
                       <Text style={styles.data}>
-                        {account.documento?.documento
-                          ? account.documento?.documento.split("/").pop()
+                        {documento?.documento
+                          ? documento?.documento.split("/").pop()
                           : "-"}
                       </Text>
                     </View>
-                    
+
                     <View style={styles.documentContent}>
-                          <Text style={styles.subTitle}>Enviado em: </Text>
-                    <Text style={styles.data}>
-                      {account.documento?.dataDocumento
-                        ? getformattedDate(
-                            new Date(account.documento?.dataDocumento)
-                          )
-                        : "-"}
-                    </Text>
+                      <Text style={styles.subTitle}>Enviado em: </Text>
+                      <Text style={styles.data}>
+                        {documento?.dataDocumento
+                          ? getformattedDate(new Date(documento?.dataDocumento))
+                          : "-"}
+                      </Text>
                     </View>
-                    
                   </>
                 )}
               </View>
@@ -176,7 +182,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: "center",
   },
-  subTitle:{
+  subTitle: {
     fontSize: 14,
     fontWeight: "400",
     color: "#007B7F",

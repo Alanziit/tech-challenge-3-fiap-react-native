@@ -6,6 +6,6 @@ export interface Account {
     userName?: string,
     saldo?:number,
     extrato?:Array<Extract>,
-    documento?: Documento,
+    documento?: Documento[],
     dataCriacao?: Date
 }
