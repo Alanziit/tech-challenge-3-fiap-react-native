@@ -11,6 +11,7 @@ import store from "./../../redux/store";
 
 // import do novo componente de cartões
 import Cartoes from "../Cartoes/Cartoes";
+import Avatar from "../Avatar/Avatar";
 import TelaEmConstrucao from "../TelaEmConstrucao/TelaEmConstrucao";
 // import do novo componente de tela em construção
 
@@ -102,6 +103,9 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {selectedScreen === "home" && (
           <>
+          <View style={styles.header}>
+            <Avatar></Avatar>
+          </View>
             <View style={styles.balanceCard}>
               <Text style={styles.greeting}>Olá, {user.userName}! :)</Text>
               <Text style={styles.date}>{getCurrentDate()}</Text>
@@ -207,6 +211,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 100,
   },
+  header:{
+      width: '100%',
+      height: 50,
+      backgroundColor: '#007B7F',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      flexDirection: 'row',
+      padding: 10,
+      },
   balanceCard: {
     backgroundColor: "#007B7F",
     borderRadius: 8,
