@@ -1,5 +1,3 @@
-import { User } from "@/financeiro/interfaces/user.interface";
-import { getUsers } from "@/financeiro/util.service";
 import React, { useState } from "react";
 import {
   Modal,
@@ -10,19 +8,22 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
-import { useDispatch } from "react-redux";
-import { updateUser } from "../../redux/userSlice";
+import { useAuth } from "@/context/AuthContext";
+import Toast from "react-native-toast-message";
 
 interface LoginModalProps {
   visible: boolean;
   onClose: () => void;
-  onLoginSuccess: (user: User) => void; // nova prop
+  onLoginSuccess: () => void; // nova prop
 }
 
-
-export default function LoginModal({ visible, onClose, onLoginSuccess }: LoginModalProps) {
-  const dispatch = useDispatch();
+export default function LoginModal({
+  visible,
+  onClose,
+  onLoginSuccess,
+}: LoginModalProps) {
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const { login } = useAuth();
 
   const handleChangeFormData = (field: string, text: string) => {
     setFormData({
@@ -31,31 +32,28 @@ export default function LoginModal({ visible, onClose, onLoginSuccess }: LoginMo
     });
   };
 
-  const handleSubmit = async (event:any) => {
+  const handleSubmit = async (event: any) => {
     event.preventDefault();
 
-    const response = await getUsers();
+    try {
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Erro ao realizadar o login.",
+      });
+    }
+    const isLooged = await login(formData.email, formData.password);
 
-    if (response.ok) {
-      const usuarios = await response.json();
+    if (isLooged) {
+      console.log("Login realizado com sucesso!");
 
-      const usuario = usuarios.filter(
-        (usuario: User) =>
-          usuario.email == formData.email &&
-          usuario.password == formData.password
-      );
-
-     // Dentro do handleSubmit
-        if (usuario.length > 0) {
-          console.log("Login realizado com sucesso!");
-          dispatch(updateUser({ name: usuario[0].userName, email: usuario[0].email, id: usuario[0].id }));
-          onLoginSuccess(usuario[0]); // chama a função para atualizar a home
-        } else {
-          console.log("Erro verifique usuário e senha");
-        }
-            } else {
-              console.log("Erro ao conectar com servidor");
-          }
+      onLoginSuccess();
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Não foi possível realizar o login.",
+      });
+    }
   };
 
   return (
@@ -149,4 +147,3 @@ const styles = StyleSheet.create({
 function redirect(arg0: string) {
   throw new Error("Function not implemented.");
 }
-

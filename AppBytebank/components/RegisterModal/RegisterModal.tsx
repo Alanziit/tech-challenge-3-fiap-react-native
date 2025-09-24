@@ -1,5 +1,7 @@
-import { Account } from "@/financeiro/interfaces/account.interface";
-import { createAccount, createUser, getUsers } from "@/financeiro/util.service";
+import { useAuth } from "@/context/AuthContext";
+import { Conta } from "@/financeiro/interfaces/conta.interface";
+import { Profile } from "@/financeiro/interfaces/profile.interface";
+import { createProfile,createUser, getUsers } from "@/financeiro/util.service";
 import React, { useState } from "react";
 import {
   Modal,
@@ -9,15 +11,18 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  Alert,
 } from "react-native";
+import Toast from "react-native-toast-message";
 
 interface RegisterModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-export default function RegisterModal({ visible, onClose }: RegisterModalProps) {
+export default function RegisterModal({
+  visible,
+  onClose,
+}: RegisterModalProps) {
   const [formData, setFormData] = useState({
     userName: "",
     email: "",
@@ -26,50 +31,51 @@ export default function RegisterModal({ visible, onClose }: RegisterModalProps) 
     id: "",
     dataCriacao: new Date(),
   });
+  const { signup } = useAuth();
 
   const handleChange = (name: string, value: string) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleAccount = async () => {
-    const novaContaUsuario: Account = {
-        userName: formData.userName,
-        id: formData.id,
-        dataCriacao: formData.dataCriacao,
-        saldo: 0,
-        extrato: [],
-      };
-
-      const response = await createAccount(novaContaUsuario);
-
-      if(response.ok) {
-        console.log("Conta criada com sucesso!");
-      }
-  };
-
-  const handleSubmit = async (event:any) => {
+  const handleSubmit = async (event: any) => {
     event.preventDefault();
 
-    const responseUsers = await getUsers();
+    const signupResult = await signup(formData.email, formData.password);
 
-    if (responseUsers.ok) {
-      const usuarios = await responseUsers.json();
-
-      const idUsuario =
-        usuarios.length > 0 ? parseInt(usuarios[usuarios.length - 1].id) + 1 : 1;
-      formData.id = idUsuario.toString();
+    if (!signupResult) {
+      setFormData({} as any);
+      onClose();
+      return;
     }
 
-    const response = await createUser(formData);
+    const { user } = signupResult;
 
-    if (response.ok) {
-      handleAccount();
-      alert("Usuário cadastrado com sucesso!");
-      setFormData({} as any);
-    } else {
-      alert("Erro ao cadastrar usuário!");
-      setFormData({} as any);
+    const conta: Conta = {
+      id: user.uid,
+      name: formData.userName,
+      saldo: 0,
+      extrato: [],
+      documento: [],
     }
+
+    const profile: Profile = {
+      userName: formData.userName,
+      id: user.uid,
+      dataCriacao: new Date,
+      conta: conta
+    };
+
+    const resp = await createProfile(profile);
+
+    if (resp) {
+      console.log("Perfil criado com sucesso!");
+    }
+
+    Toast.show({
+      type: "success",
+      text1: "Usuário cadastrado com sucesso!",
+    });
+    setFormData({} as any);
 
     onClose();
   };

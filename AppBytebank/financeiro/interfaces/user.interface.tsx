@@ -1,9 +1,7 @@
 export interface User {
     saldo: any;
-    id:number,
+    id:string,
     userName?: string,
-    email?: string,
-    password?: string,
-    terms?: boolean,
+    conta?:any,
     dataCriacao?: string
 }

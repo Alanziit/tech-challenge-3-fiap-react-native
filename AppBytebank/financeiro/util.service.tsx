@@ -1,16 +1,19 @@
+import { get, set,ref, update } from "firebase/database";
+import { database } from "../firebaseConfig";
+
 // api.ts
 // Base URL para web e mobile
 const isWeb = typeof document !== "undefined";
 const LOCAL_IP = "192.168.1.17"; // IP da sua máquina na rede
 const BASE_URL = isWeb ? "http://localhost:4000" : `http://${LOCAL_IP}:4000`;
 
+
 // Usuários
-export async function getUserById(id: number): Promise<any | null> {
+export async function getUserById(id: string): Promise<any | null> {
   try {
-    const response = await fetch(`${BASE_URL}/usuarios?id=${id}`);
-    if (response.ok) {
-      const users = await response.json();
-      return users[0] || null;
+    const response = await get(ref(database,`profiles/${id}`));
+    if (response.exists()) {
+      return response.val();
     }
   } catch (error) {
     console.error("[API] getUserById erro:", error);
@@ -41,7 +44,7 @@ export async function createUser(data: any): Promise<Response> {
 }
 
 // Contas
-export async function getAccountUserById(id: number): Promise<any | null> {
+export async function getAccountUserById(id: string): Promise<any | null> {
   try {
     const response = await fetch(`${BASE_URL}/contas?id=${id}`);
     if (response.ok) {
@@ -54,28 +57,31 @@ export async function getAccountUserById(id: number): Promise<any | null> {
   return null;
 }
 
-export async function updateAccountById(id: number, account: any): Promise<Response> {
+export async function updateAccountById(id: string, account: any): Promise<boolean> {
   try {
-    return await fetch(`${BASE_URL}/contas/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(account),
+    await update(ref(database,`profiles/${id}`), {
+      conta: {
+        saldo: account.conta.saldo,
+        extrato: account.conta.extrato,
+      }
     });
+    return true;
   } catch (error) {
     console.error("[API] updateAccountById erro:", error);
-    throw error;
+    return false;
   }
 }
 
-export async function createAccount(account: any): Promise<Response> {
+export async function createProfile(profile: any): Promise<boolean> {
   try {
-    return await fetch(`${BASE_URL}/contas`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(account),
+    await set(ref(database,`profiles/${profile.id}`), {
+      nome: profile.userName,
+      dataCriacao: profile.dataCriacao.toString(),
+      conta: profile.conta,
     });
+    return true;
   } catch (error) {
     console.error("[API] createAccount erro:", error);
-    throw error;
+    return false;
   }
 }

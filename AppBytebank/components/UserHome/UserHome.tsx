@@ -5,7 +5,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import BottomMenu from "../BotaoMenu/botaoMenu";
 import TransactionBlock from "../TransacaoBloco/Transacaobloco";
 import ExtratoCard from "../ExtratoCard/ExtratoCard";
-import { getAccountUserById } from "../../financeiro/util.service";
+import { getUserById } from "../../financeiro/util.service";
 import { Provider } from "react-redux";
 import store from "./../../redux/store";
 
@@ -16,13 +16,16 @@ import Toast from "react-native-toast-message";
 
 // novo componente de gráfico de investimento
 import GraficoInvestimento from "../GraficoInvestimento/GraficoInvestimento";
+import { useAuth } from "@/context/AuthContext";
+import { Conta } from "@/financeiro/interfaces/conta.interface";
+
 
 interface UserHomeProps {
-  user: User;
   onLogout: () => void;
 }
 
-export default function UserHome({ user, onLogout }: UserHomeProps) {
+export default function UserHome({ onLogout }: UserHomeProps) {
+  const user = useAuth().profile as User;
   const [isBalanceVisible, setIsBalanceVisible] = useState(false);
   const filePath = `images/${user.id}`;
   const [selectedScreen, setSelectedScreen] = useState<
@@ -31,13 +34,11 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
 
   const [account, setAccount] = useState({
     userName: "",
-    saldo: 0,
-    extrato: [] as any[],
+    conta: {} as Conta,
   });
 
   const [atualizandoSaldo, setAtualizandoSaldo] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
-
   const [showServices, setShowServices] = useState(false);
 
   // novos estados para gráfico de investimento
@@ -45,16 +46,15 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
 
   const toggleBalanceVisibility = () => setIsBalanceVisible(!isBalanceVisible);
 
-  const atualizarConta = () => {
-    getAccountUserById(user.id).then((data) => {
-      if (data) {
-        setAccount({
-          userName: data.userName,
-          saldo: data.saldo,
-          extrato: data.extrato,
+  const atualizarConta = async () => {
+    const profile = await getUserById(user.id);
+    console.log("Perfil atualizado:", profile);
+    if (profile) {
+      setAccount({
+          userName: profile.userName,
+          conta: profile.conta,
         });
       }
-    });
   };
 
   useEffect(() => {
@@ -133,7 +133,7 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
                 <Text style={styles.contaCorrente}>Conta Corrente</Text>
                 <Animated.Text style={[styles.valorSaldo, { opacity: fadeAnim }]}>
                   {isBalanceVisible
-                    ? `R$ ${account.saldo?.toLocaleString("pt-BR", {
+                    ? `R$ ${account.conta.saldo?.toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       }) ?? "0,00"}`
@@ -226,7 +226,7 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
 
         <BottomMenu onLogout={onLogout} onNavigate={setSelectedScreen} />
       </View>
-      <Toast />
+      
     </>
   );
 }

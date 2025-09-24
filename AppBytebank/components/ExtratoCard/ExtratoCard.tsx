@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import {
   getAccountUserById,
+  getUserById,
   updateAccountById,
 } from "@/financeiro/util.service";
 import { useSelector } from "react-redux";
@@ -17,6 +18,9 @@ import { getMonthName, getformattedDate } from "../../shared/date-utils";
 import Upload from "../Upload/Upload";
 import Loader from "../Loader/Loader";
 import { Documento } from "../../financeiro/interfaces/documento.interface";
+import { useAuth } from "@/context/AuthContext";
+import { get } from "firebase/database";
+import { Conta } from "@/financeiro/interfaces/conta.interface";
 
 interface Transacao {
   id: string;
@@ -27,16 +31,14 @@ interface Transacao {
 }
 
 export default function ExtratoCard() {
-  const user = useSelector((state: { user: User }) => state.user);
+  const user = useAuth().profile as User;
   const filePath = `documents/${user.id}/${Date.now()}.jpg`;
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [account, setAccount] = useState({
     id: "",
     userName: "",
-    saldo: 0,
-    extrato: [],
-    documento: undefined as Documento[] | undefined,
+    conta: {} as Conta,
   });
   const [documento, setDocumento] = useState<Documento | undefined>(undefined);
 
@@ -47,8 +49,10 @@ export default function ExtratoCard() {
       codigo: codigoTransacao,
     };
 
-    account.documento?.push(documento);
-    
+    account.conta.documento
+      ? account.conta.documento?.push(documento)
+      : (account.conta.documento = [documento]);
+
     const response = await updateAccountById(user.id, account);
     if (response) {
       console.log("Documento atualizado com sucesso:", response);
@@ -58,32 +62,42 @@ export default function ExtratoCard() {
   };
 
   const getCodigoTransacao = (codigo: any): boolean => {
-    const resp = account.documento?.find((d) => d.codigo === codigo);
-    if (resp) {
-      setDocumento(resp);
-      return true;
+    if (account) {
+      const resp = account.conta.documento?.find((d) => d.codigo === codigo);
+      if (resp) {
+        setDocumento(resp);
+        return true;
+      }
+      return false;
     }
     return false;
   };
 
   useEffect(() => {
-    getAccountUserById(user.id).then((data) => {
-      if (data) {
+    const fetchData = async () => {
+      const profile = await getUserById(user.id);
+
+      if (profile) {
+        console.log(profile);
         setTimeout(() => {
-          const transacoes: Transacao[] = data.extrato.map((item: any) => ({
-            id: item.id,
-            tipo: item.tipo,
-            valor: item.valor,
-            data: item.data,
-            codigoTransacao: item.codigoTransacao,
-          }));
-          setAccount(data);
+          const transacoes: Transacao[] = (profile.conta.extrato ?? []).map(
+            (item: any) => ({
+              id: item.id,
+              tipo: item.tipo,
+              valor: item.valor,
+              data: item.data,
+              codigoTransacao: item.codigoTransacao,
+            })
+          );
+          console.log(transacoes);
+          setAccount(user.conta);
           setTransacoes(transacoes);
           setLoading(false);
-        }, 1000);
+        }, 2000);
       }
-    });
-  }, [user.id]);
+    };
+    fetchData();
+  }, [user.id, user.conta]);
 
   if (loading) {
     return <Loader message={"Carregando extrato..."} size={"large"}></Loader>;

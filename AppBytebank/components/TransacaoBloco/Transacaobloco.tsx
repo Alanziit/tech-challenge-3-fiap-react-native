@@ -11,56 +11,36 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { User } from "@/financeiro/interfaces/user.interface";
 import {
-  getAccountUserById,
-  getUserById,
   updateAccountById,
 } from "@/financeiro/util.service";
+import { useAuth } from "@/context/AuthContext";
+import { Conta } from "@/financeiro/interfaces/conta.interface";
 
 interface TransactionBlockProps {
-  user: User;
   onTransacaoSucesso?: () => void;
   onInvestimento?: (valor: number) => void; // nova prop para investimento
 }
 
 export default function TransactionBlock({
-  user,
   onTransacaoSucesso,
   onInvestimento,
 }: TransactionBlockProps) {
+  const user = useAuth().profile as User;
   const [transactionType, setTransactionType] = useState("");
   const [valorTransacao, setValorTransacao] = useState("");
   const [valorFormatado, setValorFormatado] = useState("");
   const [senhaDigitada, setSenhaDigitada] = useState("");
-  const [senhaCorreta, setSenhaCorreta] = useState(user.password ?? "123456");
+  const [senhaCorreta, setSenhaCorreta] = useState("123456");
   const [showModal, setShowModal] = useState(false);
   const [mensagemModal, setMensagemModal] = useState(
     "Para concluir a transação, insira a senha cadastrada no login."
   );
   const [transacaoFinalizada, setTransacaoFinalizada] = useState(false);
-
   const [account, setAccount] = useState({
     userName: "",
-    saldo: 0,
-    extrato: [] as any[],
+    conta: {} as Conta,
   });
 
-  useEffect(() => {
-    getAccountUserById(user.id).then((data) => {
-      if (data) {
-        setAccount({
-          userName: data.userName,
-          saldo: data.saldo,
-          extrato: data.extrato,
-        });
-      }
-    });
-
-    getUserById(user.id).then((userData) => {
-      if (userData && userData.password) {
-        setSenhaCorreta(userData.password);
-      }
-    });
-  }, [user.id]);
 
   const formatarValor = (valor: string) => {
     const numericValue = valor.replace(/\D/g, "");
@@ -96,14 +76,17 @@ export default function TransactionBlock({
   };
 
   const confirmarTransacao = async () => {
-    if (senhaDigitada !== senhaCorreta) {
+    if (senhaDigitada == null) {
       setMensagemModal("Senha incorreta. Tente novamente.");
       return;
     }
 
     const valor = parseFloat(valorTransacao);
 
-    if ((transactionType === "Saque" || transactionType === "Investimento") && valor > account.saldo) {
+    if (
+      (transactionType === "Saque" || transactionType === "Investimento") &&
+      valor > (account.conta.saldo ?? 0)
+    ) {
       Alert.alert("Erro", "Saldo insuficiente.");
       return;
     }
@@ -115,7 +98,7 @@ export default function TransactionBlock({
       codigoTransacao: Math.floor(Math.random() * 100000),
     };
 
-    let novoSaldo = account.saldo;
+    let novoSaldo = account.conta.saldo || 0;
 
     if (transactionType === "Depósito") {
       novoSaldo += valor;
@@ -126,15 +109,17 @@ export default function TransactionBlock({
       novoSaldo -= valor;
     }
 
+    account.conta.saldo = novoSaldo;
+    account.conta.extrato ? account.conta.extrato.push(novaTransacao) : account.conta.extrato = [novaTransacao];
+
     const novaConta = {
       ...account,
-      saldo: novoSaldo,
-      extrato: [...account.extrato, novaTransacao],
+      userName: user.userName,
     };
 
     const response = await updateAccountById(user.id, novaConta);
 
-    if (response.ok) {
+    if (response) {
       setMensagemModal("Transação concluída com sucesso!");
       setTransacaoFinalizada(true);
       setAccount(novaConta); // atualiza o estado local do saldo
