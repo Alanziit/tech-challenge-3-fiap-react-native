@@ -142,7 +142,6 @@ export default function UserHome({ onLogout }: UserHomeProps) {
               </View>
 
               <TransactionBlock
-                user={user}
                 onTransacaoSucesso={() => setAtualizandoSaldo(true)}
                 onInvestimento={adicionarInvestimento} // envia valor para gráfico
               />
@@ -215,7 +214,7 @@ export default function UserHome({ onLogout }: UserHomeProps) {
 
           {selectedScreen === "investimentos" && (
             <GraficoInvestimento
-              saldo={account.saldo}
+              saldo={account.conta.saldo ?? 0}
               onSaldoAtualizado={(novoSaldo) =>
                 setAccount((prev) => ({ ...prev, saldo: novoSaldo }))
               }
