@@ -3,16 +3,18 @@ import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 interface BottomMenuProps {
+  onNavigate: (
+    screen: "home" | "extrato" | "services" | "cartoes" | "construcao" | "investimentos"
+  ) => void;
   onLogout: () => void;
-  onNavigate: (screen: "home" | "extrato"| "services") => void;
 }
 
-export default function BottomMenu({ onLogout, onNavigate }: BottomMenuProps) {
+export default function BotaoMenu({ onNavigate, onLogout }: BottomMenuProps) {
   return (
     <View style={styles.menuContainer}>
       <TouchableOpacity style={styles.menuItem} onPress={() => onNavigate("home")}>
         <Ionicons name="home-outline" size={24} color="white" />
-        <Text style={styles.menuText}>Início</Text>
+        <Text style={styles.menuText}>Home</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.menuItem} onPress={() => onNavigate("extrato")}>
@@ -20,18 +22,12 @@ export default function BottomMenu({ onLogout, onNavigate }: BottomMenuProps) {
         <Text style={styles.menuText}>Extrato</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.menuItem}
-        onPress={() => {
-          onNavigate("services");
-        }}
-          >
-      <Ionicons name="card-outline" size={24} color="white" />
-      <Text style={styles.menuText}>Outros serviços</Text>
-    </TouchableOpacity>
+      <TouchableOpacity style={styles.menuItem} onPress={() => onNavigate("services")}>
+        <Ionicons name="apps-outline" size={24} color="white" />
+        <Text style={styles.menuText}>Serviços</Text>
+      </TouchableOpacity>
 
-
-      <TouchableOpacity style={styles.menuItem}>
+      <TouchableOpacity style={styles.menuItem} onPress={() => onNavigate("investimentos")}>
         <Ionicons name="trending-up-outline" size={24} color="white" />
         <Text style={styles.menuText}>Investimentos</Text>
       </TouchableOpacity>
@@ -48,18 +44,9 @@ const styles = StyleSheet.create({
   menuContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    alignItems: "center",
-    backgroundColor: "#007B7F",
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#FF5031",
+    padding: 10,
+    backgroundColor: "#004D61",
   },
-  menuItem: {
-    alignItems: "center",
-  },
-  menuText: {
-    color: "white",
-    fontSize: 12,
-    marginTop: 4,
-  },
+  menuItem: { alignItems: "center" },
+  menuText: { color: "white", fontSize: 12, marginTop: 2 },
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ActivityIndicator, Image } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ActivityIndicator } from "react-native";
 import { User } from "../../financeiro/interfaces/user.interface";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import BottomMenu from "../BotaoMenu/botaoMenu";
@@ -9,13 +9,13 @@ import { getAccountUserById } from "../../financeiro/util.service";
 import { Provider } from "react-redux";
 import store from "./../../redux/store";
 
-// import do novo componente de cartões
 import Cartoes from "../Cartoes/Cartoes";
 import Upload from "../Upload/Upload";
 import TelaEmConstrucao from "../TelaEmConstrucao/TelaEmConstrucao";
 import Toast from "react-native-toast-message";
-// import do novo componente de tela em construção
 
+// novo componente de gráfico de investimento
+import GraficoInvestimento from "../GraficoInvestimento/GraficoInvestimento";
 
 interface UserHomeProps {
   user: User;
@@ -26,19 +26,22 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
   const [isBalanceVisible, setIsBalanceVisible] = useState(false);
   const filePath = `images/${user.id}`;
   const [selectedScreen, setSelectedScreen] = useState<
-    "home" | "extrato" | "services" | "cartoes" | "construcao"
+    "home" | "extrato" | "services" | "cartoes" | "construcao" | "investimentos"
   >("home");
 
   const [account, setAccount] = useState({
     userName: "",
     saldo: 0,
-    extrato: [],
+    extrato: [] as any[],
   });
 
   const [atualizandoSaldo, setAtualizandoSaldo] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const [showServices, setShowServices] = useState(false);
+
+  // novos estados para gráfico de investimento
+  const [investimentos, setInvestimentos] = useState<number[]>([]);
 
   const toggleBalanceVisibility = () => setIsBalanceVisible(!isBalanceVisible);
 
@@ -100,110 +103,131 @@ export default function UserHome({ user, onLogout }: UserHomeProps) {
     return now.toLocaleDateString("pt-BR", options);
   };
 
+  // função para adicionar investimento ao gráfico
+  const adicionarInvestimento = (valor: number) => {
+    setInvestimentos((prev) => [...prev, valor]);
+  };
+
   return (
-    <><View style={{ flex: 1, backgroundColor: "#E4EDE3" }}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {selectedScreen === "home" && (
-          <>
-            <View style={styles.header}>
-              <Upload imageUrl={require("../../assets/images/avatar.png")} filePath={filePath}></Upload>
-            </View>
-            <View style={styles.balanceCard}>
-              <Text style={styles.greeting}>Olá, {user.userName}! :)</Text>
-              <Text style={styles.date}>{getCurrentDate()}</Text>
+    <>
+      <View style={{ flex: 1, backgroundColor: "#E4EDE3" }}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {selectedScreen === "home" && (
+            <>
+              <View style={styles.header}>
+                <Upload imageUrl={require("../../assets/images/avatar.png")} filePath={filePath}></Upload>
+              </View>
+              <View style={styles.balanceCard}>
+                <Text style={styles.greeting}>Olá, {user.userName}! :)</Text>
+                <Text style={styles.date}>{getCurrentDate()}</Text>
 
-              <View style={styles.balanceInfo}>
-                <Text style={styles.balanceLabel}>Saldo</Text>
-                <TouchableOpacity onPress={toggleBalanceVisibility}>
-                  <Text style={styles.eyeIcon}>
-                    {isBalanceVisible ? <FaEye /> : <FaEyeSlash />}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.balanceInfo}>
+                  <Text style={styles.balanceLabel}>Saldo</Text>
+                  <TouchableOpacity onPress={toggleBalanceVisibility}>
+                    <Text style={styles.eyeIcon}>
+                      {isBalanceVisible ? <FaEye /> : <FaEyeSlash />}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.contaCorrente}>Conta Corrente</Text>
+                <Animated.Text style={[styles.valorSaldo, { opacity: fadeAnim }]}>
+                  {isBalanceVisible
+                    ? `R$ ${account.saldo?.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }) ?? "0,00"}`
+                    : "●●●,●●"}
+                </Animated.Text>
               </View>
 
-              <Text style={styles.contaCorrente}>Conta Corrente</Text>
-              <Animated.Text style={[styles.valorSaldo, { opacity: fadeAnim }]}>
-                {isBalanceVisible
-                  ? `R$ ${account.saldo?.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }) ?? "0,00"}`
-                  : "●●●,●●"}
-              </Animated.Text>
+              <TransactionBlock
+                user={user}
+                onTransacaoSucesso={() => setAtualizandoSaldo(true)}
+                onInvestimento={adicionarInvestimento} // envia valor para gráfico
+              />
+
+            </>
+          )}
+
+          {selectedScreen === "extrato" && (
+            <Provider store={store}>
+              <ExtratoCard />
+            </Provider>
+          )}
+
+          {selectedScreen === "services" && (
+            <View style={styles.servicesContainer}>
+              {showServices ? (
+                <>
+                  <Text style={styles.servicesTitle}>Serviços Disponíveis</Text>
+                  <TouchableOpacity
+                    style={styles.serviceButton}
+                    onPress={() => setSelectedScreen("construcao")}
+                  >
+                    <Text style={styles.serviceButtonText}>💰 Empréstimo</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.serviceButton}
+                    onPress={() => setSelectedScreen("cartoes")}
+                  >
+                    <Text style={styles.serviceButtonText}>💳 Meus Cartões</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.serviceButton}
+                    onPress={() => setSelectedScreen("construcao")}
+                  >
+                    <Text style={styles.serviceButtonText}>🙏 Doações</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.serviceButton}
+                    onPress={() => setSelectedScreen("construcao")}
+                  >
+                    <Text style={styles.serviceButtonText}>⚡ Pix</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.serviceButton}
+                    onPress={() => setSelectedScreen("construcao")}
+                  >
+                    <Text style={styles.serviceButtonText}>🛡️ Seguros</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.serviceButton}
+                    onPress={() => setSelectedScreen("construcao")}
+                  >
+                    <Text style={styles.serviceButtonText}>📱 Crédito Celular</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <View style={styles.loader}>
+                  <ActivityIndicator size="large" color="#4CAF50" />
+                  <Text>Carregando serviços...</Text>
+                </View>
+              )}
             </View>
+          )}
 
-            <TransactionBlock user={user} onTransacaoSucesso={() => setAtualizandoSaldo(true)} />
-          </>
-        )}
+          {selectedScreen === "cartoes" && <Cartoes />}
 
-        {selectedScreen === "extrato" && (
-          <Provider store={store}>
-            <ExtratoCard />
-          </Provider>
-        )}
+          {selectedScreen === "construcao" && (
+            <TelaEmConstrucao onVoltar={() => setSelectedScreen("services")} />
+          )}
 
-        {selectedScreen === "services" && (
-          <View style={styles.servicesContainer}>
-            {showServices ? (
-              <>
-                <Text style={styles.servicesTitle}>Serviços Disponíveis</Text>
-                <TouchableOpacity
-                  style={styles.serviceButton}
-                  onPress={() => setSelectedScreen("construcao")}
-                >
-                  <Text style={styles.serviceButtonText}>💰 Empréstimo</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.serviceButton}
-                  onPress={() => setSelectedScreen("cartoes")}
-                >
-                  <Text style={styles.serviceButtonText}>💳 Meus Cartões</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.serviceButton}
-                  onPress={() => setSelectedScreen("construcao")}
-                >
-                  <Text style={styles.serviceButtonText}>🙏 Doações</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.serviceButton}
-                  onPress={() => setSelectedScreen("construcao")}
-                >
-                  <Text style={styles.serviceButtonText}>⚡ Pix</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.serviceButton}
-                  onPress={() => setSelectedScreen("construcao")}
-                >
-                  <Text style={styles.serviceButtonText}>🛡️ Seguros</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.serviceButton}
-                  onPress={() => setSelectedScreen("construcao")}
-                >
-                  <Text style={styles.serviceButtonText}>📱 Crédito Celular</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <View style={styles.loader}>
-                <ActivityIndicator size="large" color="#4CAF50" />
-                <Text>Carregando serviços...</Text>
-              </View>
-            )}
-          </View>
-        )}
+          {selectedScreen === "investimentos" && (
+            <GraficoInvestimento
+              saldo={account.saldo}
+              onSaldoAtualizado={(novoSaldo) =>
+                setAccount((prev) => ({ ...prev, saldo: novoSaldo }))
+              }
+              valoresInvestimentos={investimentos}
+            />
+          )}
+        </ScrollView>
 
-        {selectedScreen === "cartoes" && (
-          <Cartoes />
-        )}
-
-        {selectedScreen === "construcao" && (
-          <TelaEmConstrucao onVoltar={() => setSelectedScreen("services")} />
-        )}
-      </ScrollView>
-
-      <BottomMenu onLogout={onLogout} onNavigate={setSelectedScreen} />
-    </View><Toast /></>
+        <BottomMenu onLogout={onLogout} onNavigate={setSelectedScreen} />
+      </View>
+      <Toast />
+    </>
   );
 }
 
@@ -211,15 +235,15 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 100,
   },
-  header:{
-      width: '100%',
-      height: 50,
-      backgroundColor: '#007B7F',
-      justifyContent: 'flex-end',
-      alignItems: 'center',
-      flexDirection: 'row',
-      padding: 10,
-      },
+  header: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#007B7F",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    flexDirection: "row",
+    padding: 10,
+  },
   balanceCard: {
     backgroundColor: "#007B7F",
     borderRadius: 8,
