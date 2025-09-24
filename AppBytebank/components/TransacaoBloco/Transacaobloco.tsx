@@ -10,25 +10,38 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { User } from "@/financeiro/interfaces/user.interface";
-import { getAccountUserById, getUserById, updateAccountById } from "@/financeiro/util.service";
+import {
+  getAccountUserById,
+  getUserById,
+  updateAccountById,
+} from "@/financeiro/util.service";
 
 interface TransactionBlockProps {
   user: User;
   onTransacaoSucesso?: () => void;
+  onInvestimento?: (valor: number) => void; // nova prop para investimento
 }
 
-export default function TransactionBlock({ user, onTransacaoSucesso }: TransactionBlockProps) {
+export default function TransactionBlock({
+  user,
+  onTransacaoSucesso,
+  onInvestimento,
+}: TransactionBlockProps) {
   const [transactionType, setTransactionType] = useState("");
   const [valorTransacao, setValorTransacao] = useState("");
   const [valorFormatado, setValorFormatado] = useState("");
   const [senhaDigitada, setSenhaDigitada] = useState("");
   const [senhaCorreta, setSenhaCorreta] = useState(user.password ?? "123456");
   const [showModal, setShowModal] = useState(false);
-  const [erroTransacao, setErroTransacao] = useState(false);
+  const [mensagemModal, setMensagemModal] = useState(
+    "Para concluir a transação, insira a senha cadastrada no login."
+  );
+  const [transacaoFinalizada, setTransacaoFinalizada] = useState(false);
+
   const [account, setAccount] = useState({
     userName: "",
     saldo: 0,
-    extrato: [],
+    extrato: [] as any[],
   });
 
   useEffect(() => {
@@ -42,17 +55,12 @@ export default function TransactionBlock({ user, onTransacaoSucesso }: Transacti
       }
     });
 
-    getUserById(user.id).then((user) => {
-      if (user && user.password) {
-        setSenhaCorreta(user.password);
+    getUserById(user.id).then((userData) => {
+      if (userData && userData.password) {
+        setSenhaCorreta(userData.password);
       }
     });
   }, [user.id]);
-
-  const [mensagemModal, setMensagemModal] = useState(
-    "Para concluir a transação, insira a senha cadastrada no login."
-  );
-  const [transacaoFinalizada, setTransacaoFinalizada] = useState(false);
 
   const formatarValor = (valor: string) => {
     const numericValue = valor.replace(/\D/g, "");
@@ -73,11 +81,16 @@ export default function TransactionBlock({ user, onTransacaoSucesso }: Transacti
 
   const handleTransaction = () => {
     if (!transactionType || !valorTransacao) {
-      Alert.alert("Erro", "Selecione o tipo de transação e insira um valor válido.");
+      Alert.alert(
+        "Erro",
+        "Selecione o tipo de transação e insira um valor válido."
+      );
       return;
     }
     setShowModal(true);
-    setMensagemModal("Para concluir a transação, insira a senha cadastrada no login.");
+    setMensagemModal(
+      "Para concluir a transação, insira a senha cadastrada no login."
+    );
     setTransacaoFinalizada(false);
     setSenhaDigitada("");
   };
@@ -90,7 +103,7 @@ export default function TransactionBlock({ user, onTransacaoSucesso }: Transacti
 
     const valor = parseFloat(valorTransacao);
 
-    if (transactionType === "Saque" && user.saldo < valor) {
+    if ((transactionType === "Saque" || transactionType === "Investimento") && valor > account.saldo) {
       Alert.alert("Erro", "Saldo insuficiente.");
       return;
     }
@@ -102,10 +115,16 @@ export default function TransactionBlock({ user, onTransacaoSucesso }: Transacti
       codigoTransacao: Math.floor(Math.random() * 100000),
     };
 
-    const novoSaldo =
-      transactionType === "Depósito"
-        ? account.saldo + valor
-        : account.saldo - valor;
+    let novoSaldo = account.saldo;
+
+    if (transactionType === "Depósito") {
+      novoSaldo += valor;
+    } else if (transactionType === "Saque") {
+      novoSaldo -= valor;
+    } else if (transactionType === "Investimento") {
+      // débito correto do saldo
+      novoSaldo -= valor;
+    }
 
     const novaConta = {
       ...account,
@@ -117,8 +136,13 @@ export default function TransactionBlock({ user, onTransacaoSucesso }: Transacti
 
     if (response.ok) {
       setMensagemModal("Transação concluída com sucesso!");
-      setErroTransacao(false);
       setTransacaoFinalizada(true);
+      setAccount(novaConta); // atualiza o estado local do saldo
+
+      // dispara callback de investimento para atualizar gráfico e saldo
+      if (transactionType === "Investimento" && onInvestimento) {
+        onInvestimento(valor);
+      }
 
       if (onTransacaoSucesso) {
         onTransacaoSucesso();
@@ -129,7 +153,6 @@ export default function TransactionBlock({ user, onTransacaoSucesso }: Transacti
       }, 2000);
     } else {
       setMensagemModal("Erro ao processar a transação.");
-      setErroTransacao(true);
     }
   };
 
@@ -143,8 +166,9 @@ export default function TransactionBlock({ user, onTransacaoSucesso }: Transacti
         style={styles.picker}
       >
         <Picker.Item label="Selecione o tipo de transação" value="" />
+        <Picker.Item label="Depósito" value="Depósito" />
         <Picker.Item label="Saque" value="Saque" />
-        <Picker.Item label="DOC/TED" value="Depósito" />
+        <Picker.Item label="Aplicar Investimento" value="Investimento" />
       </Picker>
 
       <TextInput

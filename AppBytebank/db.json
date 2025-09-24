@@ -12,7 +12,7 @@
   "contas": [
     {
       "userName": "Usuario",
-      "saldo": 6510,
+      "saldo": 5000,
       "extrato": [
         {
           "tipo": "Depósito",
@@ -43,6 +43,60 @@
           "valor": 5000,
           "data": "2025-09-16T12:58:08.510Z",
           "codigoTransacao": 12316
+        },
+        {
+          "tipo": "Investimento",
+          "valor": 510,
+          "data": "2025-09-24T00:24:42.436Z",
+          "codigoTransacao": 73453
+        },
+        {
+          "tipo": "Investimento",
+          "valor": 1000,
+          "data": "2025-09-24T00:32:54.511Z",
+          "codigoTransacao": 52744
+        },
+        {
+          "tipo": "Investimento",
+          "valor": 3000,
+          "data": "2025-09-24T00:34:01.557Z",
+          "codigoTransacao": 79987
+        },
+        {
+          "tipo": "Depósito",
+          "valor": 2000,
+          "data": "2025-09-24T00:34:45.362Z",
+          "codigoTransacao": 80147
+        },
+        {
+          "tipo": "Investimento",
+          "valor": 2000,
+          "data": "2025-09-24T00:46:57.273Z",
+          "codigoTransacao": 18892
+        },
+        {
+          "tipo": "Investimento",
+          "valor": 1000,
+          "data": "2025-09-24T00:50:26.134Z",
+          "codigoTransacao": 74744
+        },
+        {
+          "tipo": "Investimento",
+          "valor": 1000,
+          "data": "2025-09-24T00:51:00.906Z",
+          "codigoTransacao": 64953
+        },
+        {
+          "tipo": "Investimento",
+          "valor": 10000,
+          "data": "2025-09-24T01:01:31.573Z",
+          "codigoTransacao": 61329
+        },
+        {
+          "tipo": "Investimento",
+          "valor": 1000,
+          "data": "2025-09-24T01:07:57.540Z",
+          "codigoTransacao": 32955
         }
       ],
       "id": "1",
