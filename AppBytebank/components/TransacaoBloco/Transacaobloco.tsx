@@ -10,9 +10,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { User } from "@/financeiro/interfaces/user.interface";
-import {
-  updateAccountById,
-} from "@/financeiro/util.service";
+import { updateAccountById, getUserById } from "@/financeiro/util.service";
 import { useAuth } from "@/context/AuthContext";
 import { Conta } from "@/financeiro/interfaces/conta.interface";
 
@@ -30,7 +28,7 @@ export default function TransactionBlock({
   const [valorTransacao, setValorTransacao] = useState("");
   const [valorFormatado, setValorFormatado] = useState("");
   const [senhaDigitada, setSenhaDigitada] = useState("");
-  const [senhaCorreta, setSenhaCorreta] = useState("123456");
+  const [senhaCorreta] = useState("123456");
   const [showModal, setShowModal] = useState(false);
   const [mensagemModal, setMensagemModal] = useState(
     "Para concluir a transação, insira a senha cadastrada no login."
@@ -41,6 +39,23 @@ export default function TransactionBlock({
     conta: {} as Conta,
   });
 
+  // Carregar conta real do usuário ao montar
+  useEffect(() => {
+    const carregarConta = async () => {
+      try {
+        const profile = await getUserById(user.id);
+        if (profile) {
+          setAccount({
+            userName: profile.userName,
+            conta: profile.conta,
+          });
+        }
+      } catch (err) {
+        console.warn("Erro ao carregar conta:", err);
+      }
+    };
+    carregarConta();
+  }, [user.id]);
 
   const formatarValor = (valor: string) => {
     const numericValue = valor.replace(/\D/g, "");
@@ -76,7 +91,7 @@ export default function TransactionBlock({
   };
 
   const confirmarTransacao = async () => {
-    if (senhaDigitada == null) {
+    if (senhaDigitada !== senhaCorreta) {
       setMensagemModal("Senha incorreta. Tente novamente.");
       return;
     }
@@ -105,10 +120,10 @@ export default function TransactionBlock({
     } else if (transactionType === "Saque") {
       novoSaldo -= valor;
     } else if (transactionType === "Investimento") {
-      // débito correto do saldo
       novoSaldo -= valor;
     }
 
+    // atualiza extrato local
     account.conta.saldo = novoSaldo;
     account.conta.extrato ? account.conta.extrato.push(novaTransacao) : account.conta.extrato = [novaTransacao];
 
@@ -122,7 +137,10 @@ export default function TransactionBlock({
     if (response) {
       setMensagemModal("Transação concluída com sucesso!");
       setTransacaoFinalizada(true);
-      setAccount(novaConta); // atualiza o estado local do saldo
+      setAccount({
+        ...novaConta,
+        userName: novaConta.userName || "", // Ensure userName is a string
+      }); // atualiza o estado local do saldo
 
       // dispara callback de investimento para atualizar gráfico e saldo
       if (transactionType === "Investimento" && onInvestimento) {

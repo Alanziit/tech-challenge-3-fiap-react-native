@@ -4,7 +4,7 @@ import {
   UserCredential,
 } from "firebase/auth";
 import { createContext, ReactNode, useContext, useState } from "react";
-import { auth } from "../firebaseConfig";
+import { auth } from "../context/firebaseConfig"; 
 import Toast from "react-native-toast-message";
 import { getUserById } from "@/financeiro/util.service";
 import { User } from "@/financeiro/interfaces/user.interface";

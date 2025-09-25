@@ -5,7 +5,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import BottomMenu from "../BotaoMenu/botaoMenu";
 import TransactionBlock from "../TransacaoBloco/Transacaobloco";
 import ExtratoCard from "../ExtratoCard/ExtratoCard";
-import { getUserById } from "../../financeiro/util.service";
+import { getUserById, updateAccountById } from "../../financeiro/util.service";
 import { Provider } from "react-redux";
 import store from "./../../redux/store";
 
@@ -14,11 +14,9 @@ import Upload from "../Upload/Upload";
 import TelaEmConstrucao from "../TelaEmConstrucao/TelaEmConstrucao";
 import Toast from "react-native-toast-message";
 
-// novo componente de gráfico de investimento
 import GraficoInvestimento from "../GraficoInvestimento/GraficoInvestimento";
 import { useAuth } from "@/context/AuthContext";
 import { Conta } from "@/financeiro/interfaces/conta.interface";
-
 
 interface UserHomeProps {
   onLogout: () => void;
@@ -47,19 +45,40 @@ export default function UserHome({ onLogout }: UserHomeProps) {
   const toggleBalanceVisibility = () => setIsBalanceVisible(!isBalanceVisible);
 
   const atualizarConta = async () => {
-    const profile = await getUserById(user.id);
-    console.log("Perfil atualizado:", profile);
-    if (profile) {
-      setAccount({
+    try {
+      const profile = await getUserById(user.id);
+      console.log("Perfil atualizado:", profile);
+      if (profile) {
+        setAccount({
           userName: profile.userName,
           conta: profile.conta,
         });
+
+        // se houver extrato/investimentos no backend, atualize também o array local de investimentos (se necessário)
+        if (profile.conta?.extrato) {
+          // aqui estamos apenas reconstruindo uma lista de "investimentos" a partir do extrato,
+          // se no seu backend tiver um campo específico para investimentos, adapte.
+          const list = (profile.conta.extrato || [])
+            .filter((t: any) => t.tipo === "Investimento")
+            .map((t: any) => t.valor);
+          if (list.length > 0) setInvestimentos(list);
+        }
       }
+    } catch (err) {
+      console.warn("Erro ao atualizar conta:", err);
+    }
   };
 
   useEffect(() => {
     atualizarConta();
   }, [user.id]);
+
+  // Recarrega sempre que volta para a tela home (garante dados atualizados)
+  useEffect(() => {
+    if (selectedScreen === "home") {
+      atualizarConta();
+    }
+  }, [selectedScreen]);
 
   useEffect(() => {
     if (atualizandoSaldo) {
@@ -103,9 +122,31 @@ export default function UserHome({ onLogout }: UserHomeProps) {
     return now.toLocaleDateString("pt-BR", options);
   };
 
-  // função para adicionar investimento ao gráfico
+  // função para adicionar investimento ao gráfico (vinda do TransactionBlock)
   const adicionarInvestimento = (valor: number) => {
     setInvestimentos((prev) => [...prev, valor]);
+  };
+
+  // novo handler: atualiza o saldo dentro de account.conta.saldo e persiste no backend
+  const handleSaldoAtualizado = async (novoSaldo: number) => {
+    // Atualiza localmente o estado de account (conta.saldo)
+    setAccount((prev) => {
+      const updated = {
+        ...prev,
+        conta: { ...prev.conta, saldo: novoSaldo },
+      };
+      // Persistir no backend (chamada assíncrona, não bloqueante)
+      updateAccountById(user.id, {
+        userName: updated.userName || user.userName,
+        conta: updated.conta,
+      }).catch((err) => console.warn("Erro ao persistir saldo:", err));
+      return updated;
+    });
+  };
+
+  // handler para sincronizar a lista de pontos do gráfico com o estado do pai
+  const handleInvestimentosChange = (novosValores: number[]) => {
+    setInvestimentos(novosValores);
   };
 
   return (
@@ -133,10 +174,10 @@ export default function UserHome({ onLogout }: UserHomeProps) {
                 <Text style={styles.contaCorrente}>Conta Corrente</Text>
                 <Animated.Text style={[styles.valorSaldo, { opacity: fadeAnim }]}>
                   {isBalanceVisible
-                    ? `R$ ${account.conta.saldo?.toLocaleString("pt-BR", {
+                    ? `R$ ${(account.conta?.saldo ?? 0).toLocaleString("pt-BR", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
-                      }) ?? "0,00"}`
+                      })}`
                     : "●●●,●●"}
                 </Animated.Text>
               </View>
@@ -214,11 +255,10 @@ export default function UserHome({ onLogout }: UserHomeProps) {
 
           {selectedScreen === "investimentos" && (
             <GraficoInvestimento
-              saldo={account.conta.saldo ?? 0}
-              onSaldoAtualizado={(novoSaldo) =>
-                setAccount((prev) => ({ ...prev, saldo: novoSaldo }))
-              }
+              saldo={account.conta?.saldo ?? 0}
+              onSaldoAtualizado={handleSaldoAtualizado}
               valoresInvestimentos={investimentos}
+              onInvestimentosChange={handleInvestimentosChange}
             />
           )}
         </ScrollView>
