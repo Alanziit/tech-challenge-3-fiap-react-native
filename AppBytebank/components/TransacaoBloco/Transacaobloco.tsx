@@ -11,7 +11,7 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import { User } from "@/financeiro/interfaces/user.interface";
 import { updateAccountById, getUserById } from "@/financeiro/util.service";
-import { useAuth } from "@/context/AuthContext";
+import { ReauthenticateUser, useAuth } from "@/context/AuthContext";
 import { Conta } from "@/financeiro/interfaces/conta.interface";
 
 interface TransactionBlockProps {
@@ -28,7 +28,6 @@ export default function TransactionBlock({
   const [valorTransacao, setValorTransacao] = useState("");
   const [valorFormatado, setValorFormatado] = useState("");
   const [senhaDigitada, setSenhaDigitada] = useState("");
-  const [senhaCorreta] = useState("123456");
   const [showModal, setShowModal] = useState(false);
   const [mensagemModal, setMensagemModal] = useState(
     "Para concluir a transação, insira a senha cadastrada no login."
@@ -91,7 +90,7 @@ export default function TransactionBlock({
   };
 
   const confirmarTransacao = async () => {
-    if (senhaDigitada !== senhaCorreta) {
+    if (await ReauthenticateUser(user.email ?? "",senhaDigitada)) {
       setMensagemModal("Senha incorreta. Tente novamente.");
       return;
     }

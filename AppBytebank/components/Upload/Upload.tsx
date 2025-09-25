@@ -6,7 +6,7 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../../context/firebaseConfig";
+import { storage } from "../../firebaseConfig";
 import { StyleSheet } from "react-native";
 import Loader from "../Loader/Loader";
 import Toast from "react-native-toast-message";

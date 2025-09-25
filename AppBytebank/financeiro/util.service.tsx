@@ -1,5 +1,5 @@
 import { get, set,ref, update } from "firebase/database";
-import { database } from "../context/firebaseConfig";
+import { database } from "../firebaseConfig";
 
 // api.ts
 // Base URL para web e mobile

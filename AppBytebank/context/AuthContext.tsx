@@ -1,10 +1,12 @@
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
   signInWithEmailAndPassword,
   UserCredential,
 } from "firebase/auth";
 import { createContext, ReactNode, useContext, useState } from "react";
-import { auth } from "../context/firebaseConfig"; 
+import { auth } from "../firebaseConfig";
 import Toast from "react-native-toast-message";
 import { getUserById } from "@/financeiro/util.service";
 import { User } from "@/financeiro/interfaces/user.interface";
@@ -14,7 +16,10 @@ interface IAuthContext {
   profile: User | null;
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<boolean>;
-  signup: (username: string, password: string) => Promise<UserCredential | void>;
+  signup: (
+    username: string,
+    password: string
+  ) => Promise<UserCredential | void>;
   logout: () => void;
 }
 
@@ -34,12 +39,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       );
       userCredential;
       const user = await getUserById(userCredential.user.uid);
-      const userProfile:User = {
-                  userName: user.nome,
-                  id: userCredential.user.uid,
-                  saldo: user?.saldo,
-           
-      }
+      const userProfile: User = {
+        userName: user.nome,
+        id: userCredential.user.uid,
+        saldo: user?.saldo,
+        email: userCredential.user.email,
+      };
+
       setProfile(userProfile);
       setIsAuthenticated(true);
       console.info("Usuário logado com sucesso!");
@@ -51,16 +57,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (username: string, password: string) => {
-    try{
-        const response = await createUserWithEmailAndPassword(auth, username, password);
-        console.info("Usuário cadastrado com sucesso!");
-        return response;
-    }catch(error){
-         Toast.show({
-                type: "error",
-                text1: "Erro ao cadastrar usuário.",
-              });
-        console.error("Erro ao cadastrar usuário", error);
+    try {
+      const response = await createUserWithEmailAndPassword(
+        auth,
+        username,
+        password
+      );
+      console.info("Usuário cadastrado com sucesso!");
+      return response;
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Erro ao cadastrar usuário.",
+      });
+      console.error("Erro ao cadastrar usuário", error);
       return;
     }
   };
@@ -86,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -97,4 +107,27 @@ export const useAuth = () => {
   }
 
   return context;
+};
+
+export const ReauthenticateUser = async (
+  email: string,
+  password: string
+): Promise<boolean> => {
+  try {
+    const credentials = EmailAuthProvider.credential(email, password);
+    if (auth.currentUser) {
+      const response = await reauthenticateWithCredential(
+        auth.currentUser,
+        credentials
+      );
+      return response.user.providerId === password ? true : false;
+    }
+    return false;
+  } catch (error) {
+    Toast.show({
+      type: "error",
+      text1: "Ocorreu um erro ao tentar reautenticar o usuário.",
+    });
+    return false;
+  }
 };
