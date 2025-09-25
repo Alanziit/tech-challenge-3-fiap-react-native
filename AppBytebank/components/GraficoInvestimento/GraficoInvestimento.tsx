@@ -6,12 +6,14 @@ interface GraficoInvestimentoProps {
   saldo: number; // saldo inicial da conta
   onSaldoAtualizado: (novoSaldo: number) => void;
   valoresInvestimentos?: number[];
+  onInvestimentosChange?: (novosValores: number[]) => void; // callback para atualizar pai
 }
 
 export default function GraficoInvestimento({
   saldo,
   onSaldoAtualizado,
   valoresInvestimentos = [],
+  onInvestimentosChange,
 }: GraficoInvestimentoProps) {
   const [valores, setValores] = useState<number[]>([]);
   const [valorInput, setValorInput] = useState("");
@@ -55,12 +57,15 @@ export default function GraficoInvestimento({
 
     const novoSaldo = saldoAtual - valorNumeric;
     const novoTotalInvestido = totalInvestido + valorNumeric;
+    const novosValores = [...valores, valorNumeric];
 
     setSaldoAtual(novoSaldo);
     setTotalInvestido(novoTotalInvestido);
-    onSaldoAtualizado(novoSaldo);
+    onSaldoAtualizado(novoSaldo); // informa o pai para persistir e atualizar o estado global
 
-    setValores((prev) => [...prev, valorNumeric]); // adiciona valor positivo no gráfico
+    setValores(novosValores);
+    if (onInvestimentosChange) onInvestimentosChange(novosValores); // mantém o pai em sincronia
+
     setValorInput("");
     setValorNumeric(0);
   };
@@ -75,12 +80,15 @@ export default function GraficoInvestimento({
 
     const novoSaldo = saldoAtual + valorNumeric;
     const novoTotalInvestido = totalInvestido - valorNumeric;
+    const novosValores = [...valores, -valorNumeric]; // registra resgate no gráfico como valor negativo
 
     setSaldoAtual(novoSaldo);
     setTotalInvestido(novoTotalInvestido);
-    onSaldoAtualizado(novoSaldo);
+    onSaldoAtualizado(novoSaldo); // informa o pai para persistir o novo saldo
 
-    setValores((prev) => [...prev, -valorNumeric]); // registra resgate no gráfico
+    setValores(novosValores);
+    if (onInvestimentosChange) onInvestimentosChange(novosValores);
+
     setValorInput("");
     setValorNumeric(0);
   };
@@ -125,6 +133,10 @@ export default function GraficoInvestimento({
       />
 
       <View style={styles.botoesContainer}>
+        <TouchableOpacity style={[styles.botao, { backgroundColor: "#007B7F" }]} onPress={aplicarInvestimento}>
+          <Text style={styles.textoBotao}>Aplicar</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={[styles.botao, { backgroundColor: "#FF5031" }]} onPress={resgatarInvestimento}>
           <Text style={styles.textoBotao}>Resgatar</Text>
         </TouchableOpacity>

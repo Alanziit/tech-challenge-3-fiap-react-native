@@ -42,6 +42,9 @@ export default function ExtratoCard() {
   });
   const [documento, setDocumento] = useState<Documento | undefined>(undefined);
 
+  // --- ESTADO DO FILTRO ---
+  const [filtro, setFiltro] = useState<"Todos" | "Saque" | "Depósito">("Todos");
+
   const handleExtract = async (codigoTransacao: any) => {
     const documento = {
       documento: filePath,
@@ -103,11 +106,51 @@ export default function ExtratoCard() {
     return <Loader message={"Carregando extrato..."} size={"large"}></Loader>;
   }
 
+  // --- FILTRO DAS TRANSAÇÕES ---
+  const transacoesFiltradas =
+    filtro === "Todos"
+      ? transacoes
+      : transacoes.filter((t) => t.tipo === filtro);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Extrato</Text>
+
+      {/* Botões de Filtro */}
+      <View style={styles.filterContainer}>
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            filtro === "Todos" && styles.filterButtonAtivo,
+          ]}
+          onPress={() => setFiltro("Todos")}
+        >
+          <Text style={styles.filterText}>Todos</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            filtro === "Saque" && styles.filterButtonAtivo,
+          ]}
+          onPress={() => setFiltro("Saque")}
+        >
+          <Text style={styles.filterText}>Saques</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.filterButton,
+            filtro === "Depósito" && styles.filterButtonAtivo,
+          ]}
+          onPress={() => setFiltro("Depósito")}
+        >
+          <Text style={styles.filterText}>Depósitos</Text>
+        </TouchableOpacity>
+      </View>
+
       <FlatList
-        data={transacoes}
+        data={transacoesFiltradas}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
           // Ajuste para garantir que SAQUE seja sempre negativo
@@ -233,5 +276,23 @@ const styles = StyleSheet.create({
   documentContent: {
     flexDirection: "row",
     gap: 5,
+  },
+  filterContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 15,
+  },
+  filterButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    backgroundColor: "#ddd",
+  },
+  filterButtonAtivo: {
+    backgroundColor: "#007B7F",
+  },
+  filterText: {
+    color: "#fff",
+    fontWeight: "600",
   },
 });

@@ -115,7 +115,7 @@ export default function RegisterModal({
 
           <TextInput
             style={styles.input}
-            placeholder="Digite sua senha"
+            placeholder="Digite sua senha com no mínimo 6 caracteres"
             value={formData.password}
             onChangeText={(text) => handleChange("password", text)}
             secureTextEntry
