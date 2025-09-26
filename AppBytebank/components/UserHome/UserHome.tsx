@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, ActivityIndicator } from "react-native";
 import { User } from "../../financeiro/interfaces/user.interface";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import Icon from "react-native-vector-icons/FontAwesome";
 import BottomMenu from "../BotaoMenu/botaoMenu";
 import TransactionBlock from "../TransacaoBloco/Transacaobloco";
 import ExtratoCard from "../ExtratoCard/ExtratoCard";
@@ -12,7 +12,6 @@ import store from "./../../redux/store";
 import Cartoes from "../Cartoes/Cartoes";
 import Upload from "../Upload/Upload";
 import TelaEmConstrucao from "../TelaEmConstrucao/TelaEmConstrucao";
-import Toast from "react-native-toast-message";
 
 import GraficoInvestimento from "../GraficoInvestimento/GraficoInvestimento";
 import { useAuth } from "@/context/AuthContext";
@@ -152,6 +151,11 @@ export default function UserHome({ onLogout }: UserHomeProps) {
   return (
     <>
       <View style={{ flex: 1, backgroundColor: "#E4EDE3" }}>
+        {selectedScreen === "extrato" && (
+            <Provider store={store}>
+              <ExtratoCard />
+            </Provider>
+          )}
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {selectedScreen === "home" && (
             <>
@@ -165,9 +169,7 @@ export default function UserHome({ onLogout }: UserHomeProps) {
                 <View style={styles.balanceInfo}>
                   <Text style={styles.balanceLabel}>Saldo</Text>
                   <TouchableOpacity onPress={toggleBalanceVisibility}>
-                    <Text style={styles.eyeIcon}>
-                      {isBalanceVisible ? <FaEye /> : <FaEyeSlash />}
-                    </Text>
+                      <Icon style={styles.eyeIcon} name={isBalanceVisible ? "eye" : "eye-slash"} size={20} color="#000" />
                   </TouchableOpacity>
                 </View>
 
@@ -188,12 +190,6 @@ export default function UserHome({ onLogout }: UserHomeProps) {
               />
 
             </>
-          )}
-
-          {selectedScreen === "extrato" && (
-            <Provider store={store}>
-              <ExtratoCard />
-            </Provider>
           )}
 
           {selectedScreen === "services" && (

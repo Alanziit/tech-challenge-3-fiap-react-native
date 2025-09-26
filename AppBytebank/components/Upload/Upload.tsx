@@ -3,11 +3,11 @@ import {
   Image,
   TouchableOpacity,
   ImageSourcePropType,
+  StyleSheet
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../../firebaseConfig";
-import { StyleSheet } from "react-native";
 import Loader from "../Loader/Loader";
 import Toast from "react-native-toast-message";
 
@@ -94,7 +94,7 @@ export default function Upload({ imageUrl, filePath, showImage, message, onPress
 
 const styles = StyleSheet.create({
   avatar: {
-    borderRadius: "100%",
+    borderRadius: 100,
     width: 40,
     height: 40,
   },

@@ -1,7 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { Conta } from "@/financeiro/interfaces/conta.interface";
 import { Profile } from "@/financeiro/interfaces/profile.interface";
-import { createProfile,createUser, getUsers } from "@/financeiro/util.service";
+import { createProfile } from "@/financeiro/util.service";
 import React, { useState } from "react";
 import {
   Modal,

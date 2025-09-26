@@ -10,7 +10,6 @@ import {
   ScrollView,
   Dimensions,
 } from "react-native";
-import { User } from "@/financeiro/interfaces/user.interface";
 import UserHome from "@/components/UserHome/UserHome";
 import Loading from "@/components/Loading/Loading";
 import { useAuth } from "@/context/AuthContext";

@@ -8,18 +8,15 @@ import {
   TouchableOpacity,
 } from "react-native";
 import {
-  getAccountUserById,
   getUserById,
   updateAccountById,
 } from "@/financeiro/util.service";
-import { useSelector } from "react-redux";
 import { User } from "@/financeiro/interfaces/user.interface";
 import { getMonthName, getformattedDate } from "../../shared/date-utils";
 import Upload from "../Upload/Upload";
 import Loader from "../Loader/Loader";
 import { Documento } from "../../financeiro/interfaces/documento.interface";
 import { useAuth } from "@/context/AuthContext";
-import { get } from "firebase/database";
 import { Conta } from "@/financeiro/interfaces/conta.interface";
 
 interface Transacao {
@@ -148,10 +145,10 @@ export default function ExtratoCard() {
           <Text style={styles.filterText}>Depósitos</Text>
         </TouchableOpacity>
       </View>
-
+          
       <FlatList
         data={transacoesFiltradas}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.codigoTransacao ?? ""}
         renderItem={({ item }) => {
           // Ajuste para garantir que SAQUE seja sempre negativo
           const isSaque = item.tipo === "Saque";
