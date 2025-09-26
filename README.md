@@ -1,14 +1,12 @@
-# tech-challenge-3-fiap-react-native
-repositorio para mobile
-
-
-# Tech Challenge Fiap
+# Tech Challenge Fiap 3
+##### Repositorio para mobile
 
 ## Tecnologias utilizadas no projeto
+
 #### • Node version 20.19.0
 #### • React Native
 #### • Figma
-#### • json-server
+#### • Firebase
 
 ---------------------------------------------------------------
 
@@ -41,15 +39,15 @@ AppBytebank >> financeiro >> util.services.tsx
 
 e coloque o ip da sua maquina na constante *const LOCAL_IP*
 
+**Também é possível rodar o projeto via Emulador do VisualStudio**
 
-**Subida do banco de dados json-server, abra outro terminal e execute o comando abaixo**
+- npm run start
+- Opção "a" (Android)
 
-- npm run json-server
+Obs: É necessário ter o visual studo instalado e o emulador devidamente configurado em sua máquina.
 
-*O banco de dados será executado na porta 4000*
 
 **O projeto já possui um usuário criado para testes, para realizar o login, utilize o usuário de teste abaixo**
 
 usuario: teste@email.com
 senha: 123456
-
