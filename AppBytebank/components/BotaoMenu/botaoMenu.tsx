@@ -46,6 +46,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     padding: 10,
     backgroundColor: "#004D61",
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0
   },
   menuItem: { alignItems: "center" },
   menuText: { color: "white", fontSize: 12, marginTop: 2 },

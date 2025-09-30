@@ -181,9 +181,9 @@ export default function ExtratoCard() {
                     {getformattedDate(new Date(item.data))}
                   </Text>
                 </View>
-                <TouchableOpacity>
+                <TouchableOpacity style={styles.iconUpload}>
                   <Upload
-                    imageUrl={require("../../assets/images/upload-icon.svg")}
+                    imageUrl={require("../../assets/images/upload-icon.png")}
                     filePath={filePath}
                     message={"Documento enviado com sucesso!"}
                     onPress={() => handleExtract(item.codigoTransacao)}
@@ -252,6 +252,7 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
   },
   tipo: {
@@ -292,4 +293,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
   },
+  iconUpload: {
+      marginTop: 10
+  }
 });

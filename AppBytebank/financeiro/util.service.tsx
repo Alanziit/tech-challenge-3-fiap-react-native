@@ -4,7 +4,7 @@ import { database } from "../firebaseConfig";
 // api.ts
 // Base URL para web e mobile
 const isWeb = typeof document !== "undefined";
-const LOCAL_IP = "192.168.1.17"; // IP da sua máquina na rede
+const LOCAL_IP = "187.34.127.18"; // IP da sua máquina na rede
 const BASE_URL = isWeb ? "http://localhost:4000" : `http://${LOCAL_IP}:4000`;
 
 

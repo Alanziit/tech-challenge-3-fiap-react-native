@@ -13,7 +13,7 @@ import {
 import UserHome from "@/components/UserHome/UserHome";
 import Loading from "@/components/Loading/Loading";
 import { useAuth } from "@/context/AuthContext";
-import Toast from "react-native-toast-message";
+
 
 export default function Index() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -224,7 +224,6 @@ export default function Index() {
             onClose={() => setIsModalRegisterOpen(false)}
           />
         </View>
-        <Toast />
     </>
   );
 }
