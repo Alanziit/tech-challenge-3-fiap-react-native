@@ -7,7 +7,7 @@ import TransactionBlock from "../TransacaoBloco/Transacaobloco";
 import ExtratoCard from "../ExtratoCard/ExtratoCard";
 import { getUserById, updateAccountById } from "../../financeiro/util.service";
 import { Provider } from "react-redux";
-import store from "./../../redux/store";
+import store from "../../redux/store";
 
 import Cartoes from "../Cartoes/Cartoes";
 import Upload from "../Upload/Upload";
