@@ -9,21 +9,27 @@ import {
   Alert,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import { useDispatch } from "react-redux";
+
 import { User } from "@/financeiro/interfaces/user.interface";
 import { updateAccountById, getUserById } from "@/financeiro/util.service";
 import { ReauthenticateUser, useAuth } from "@/context/AuthContext";
 import { Conta } from "@/financeiro/interfaces/conta.interface";
 
+import { setUser } from "@/redux/userSlice";
+import { CacheService } from "@/financeiro/cache.service"; // 🔹 AJUSTE: importado para atualizar cache local
+
 interface TransactionBlockProps {
   onTransacaoSucesso?: () => void;
-  onInvestimento?: (valor: number) => void; // nova prop para investimento
+  onInvestimento?: (valor: number) => void;
 }
 
 export default function TransactionBlock({
   onTransacaoSucesso,
   onInvestimento,
 }: TransactionBlockProps) {
-  const user = useAuth().profile as User;
+  const { profile: user } = useAuth();
+  const dispatch = useDispatch();
   const [transactionType, setTransactionType] = useState("");
   const [valorTransacao, setValorTransacao] = useState("");
   const [valorFormatado, setValorFormatado] = useState("");
@@ -33,28 +39,24 @@ export default function TransactionBlock({
     "Para concluir a transação, insira a senha cadastrada no login."
   );
   const [transacaoFinalizada, setTransacaoFinalizada] = useState(false);
-  const [account, setAccount] = useState({
-    userName: "",
-    conta: {} as Conta,
-  });
+  const [account, setAccount] = useState<Conta>({
+    saldo: 0,
+    extrato: [],
+  } as unknown as Conta);
 
-  // Carregar conta real do usuário ao montar
+  // 🔹 Carrega conta real do usuário
   useEffect(() => {
     const carregarConta = async () => {
+      if (!user) return;
       try {
         const profile = await getUserById(user.id);
-        if (profile) {
-          setAccount({
-            userName: profile.userName,
-            conta: profile.conta,
-          });
-        }
+        if (profile?.conta) setAccount(profile.conta);
       } catch (err) {
         console.warn("Erro ao carregar conta:", err);
       }
     };
     carregarConta();
-  }, [user.id]);
+  }, [user]);
 
   const formatarValor = (valor: string) => {
     const numericValue = valor.replace(/\D/g, "");
@@ -75,31 +77,38 @@ export default function TransactionBlock({
 
   const handleTransaction = () => {
     if (!transactionType || !valorTransacao) {
-      Alert.alert(
-        "Erro",
-        "Selecione o tipo de transação e insira um valor válido."
-      );
+      Alert.alert("Erro", "Selecione o tipo de transação e insira um valor válido.");
       return;
     }
     setShowModal(true);
-    setMensagemModal(
-      "Para concluir a transação, insira a senha cadastrada no login."
-    );
+    setMensagemModal("Para concluir a transação, insira a senha cadastrada no login.");
     setTransacaoFinalizada(false);
     setSenhaDigitada("");
   };
 
   const confirmarTransacao = async () => {
-    if (await ReauthenticateUser(user.email ?? "",senhaDigitada)) {
+    if (!user) {
+      setMensagemModal("Usuário não autenticado.");
+      return;
+    }
+
+    if (!account) {
+      setMensagemModal("Conta do usuário não carregada ainda.");
+      return;
+    }
+
+    const autenticado = await ReauthenticateUser(user.email ?? "", senhaDigitada);
+    if (!autenticado) {
       setMensagemModal("Senha incorreta. Tente novamente.");
       return;
     }
 
     const valor = parseFloat(valorTransacao);
+    const saldoAtual = account?.saldo ?? 0;
 
     if (
       (transactionType === "Saque" || transactionType === "Investimento") &&
-      valor > (account.conta.saldo ?? 0)
+      valor > saldoAtual
     ) {
       Alert.alert("Erro", "Saldo insuficiente.");
       return;
@@ -112,48 +121,53 @@ export default function TransactionBlock({
       codigoTransacao: Math.floor(Math.random() * 100000),
     };
 
-    let novoSaldo = account.conta.saldo || 0;
+    let novoSaldo = saldoAtual;
+    if (transactionType === "Depósito") novoSaldo += valor;
+    if (transactionType === "Saque") novoSaldo -= valor;
+    if (transactionType === "Investimento") novoSaldo -= valor;
 
-    if (transactionType === "Depósito") {
-      novoSaldo += valor;
-    } else if (transactionType === "Saque") {
-      novoSaldo -= valor;
-    } else if (transactionType === "Investimento") {
-      novoSaldo -= valor;
-    }
+    const novoExtrato = [...(account.extrato || []), novaTransacao];
 
-    // atualiza extrato local
-    account.conta.saldo = novoSaldo;
-    account.conta.extrato ? account.conta.extrato.push(novaTransacao) : account.conta.extrato = [novaTransacao];
-
-    const novaConta = {
+    const novaConta: Conta = {
       ...account,
-      userName: user.userName,
+      saldo: novoSaldo,
+      extrato: novoExtrato,
     };
 
-    const response = await updateAccountById(user.id, novaConta);
+    try {
+      const response = await updateAccountById(user.id, novaConta);
 
-    if (response) {
-      setMensagemModal("Transação concluída com sucesso!");
-      setTransacaoFinalizada(true);
-      setAccount({
-        ...novaConta,
-        userName: novaConta.userName || "", // Ensure userName is a string
-      }); // atualiza o estado local do saldo
+      if (response) {
+        // 🔹 AJUSTE: Atualiza extrato e saldo dinamicamente sem alterar estrutura existente
+        const perfilAtualizado = {
+          ...user,
+          conta: novaConta,
+        };
 
-      // dispara callback de investimento para atualizar gráfico e saldo
-      if (transactionType === "Investimento" && onInvestimento) {
-        onInvestimento(valor);
+        // Atualiza o estado global imediatamente
+        dispatch(setUser(perfilAtualizado));
+
+        // Atualiza cache local 'user_<id>' para manter consistência
+        await CacheService.set(`user_${user.id}`, perfilAtualizado);
+
+        setMensagemModal("Transação concluída com sucesso!");
+        setTransacaoFinalizada(true);
+        setAccount(novaConta);
+
+        // Mantém lógica existente
+        if (transactionType === "Investimento" && onInvestimento) {
+          onInvestimento(valor);
+        }
+
+        if (onTransacaoSucesso) onTransacaoSucesso();
+
+        // Fecha o modal automaticamente após alguns segundos
+        setTimeout(() => setShowModal(false), 2000);
+      } else {
+        setMensagemModal("Erro ao processar a transação.");
       }
-
-      if (onTransacaoSucesso) {
-        onTransacaoSucesso();
-      }
-
-      setTimeout(() => {
-        setShowModal(false);
-      }, 2000);
-    } else {
+    } catch (err) {
+      console.error("[API] updateAccountById erro:", err);
       setMensagemModal("Erro ao processar a transação.");
     }
   };

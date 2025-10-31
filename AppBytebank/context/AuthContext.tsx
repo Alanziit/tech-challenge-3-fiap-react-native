@@ -37,7 +37,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         username,
         password
       );
-      userCredential;
       const user = await getUserById(userCredential.user.uid);
       const userProfile: User = {
         userName: user.nome,
@@ -114,19 +113,17 @@ export const ReauthenticateUser = async (
   password: string
 ): Promise<boolean> => {
   try {
+    if (!auth.currentUser) return false;
+
     const credentials = EmailAuthProvider.credential(email, password);
-    if (auth.currentUser) {
-      const response = await reauthenticateWithCredential(
-        auth.currentUser,
-        credentials
-      );
-      return response.user.providerId === password ? true : false;
-    }
-    return false;
+    await reauthenticateWithCredential(auth.currentUser, credentials);
+
+    // Se não lançar erro, a senha está correta
+    return true;
   } catch (error) {
     Toast.show({
       type: "error",
-      text1: "Ocorreu um erro ao tentar reautenticar o usuário.",
+      text1: "Senha incorreta ou erro na autenticação.",
     });
     return false;
   }

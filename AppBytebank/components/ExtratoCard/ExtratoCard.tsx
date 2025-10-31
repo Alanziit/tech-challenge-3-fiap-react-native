@@ -1,11 +1,12 @@
 // components/ExtratoCard/ExtratoCard.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import {
   getUserById,
@@ -31,16 +32,19 @@ export default function ExtratoCard() {
   const user = useAuth().profile as User;
   const filePath = `documents/${user.id}/${Date.now()}.jpg`;
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
-  const [loading, setLoading] = useState(true);
   const [account, setAccount] = useState({
     id: "",
     userName: "",
     conta: {} as Conta,
   });
   const [documento, setDocumento] = useState<Documento | undefined>(undefined);
-
-  // --- ESTADO DO FILTRO ---
   const [filtro, setFiltro] = useState<"Todos" | "Saque" | "Depósito">("Todos");
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [pagina, setPagina] = useState(1);
+  const [transacoesTotais, setTransacoesTotais] = useState<Transacao[]>([]);
+
+  const ITENS_POR_PAGINA = 20;
 
   const handleExtract = async (codigoTransacao: any) => {
     const documento = {
@@ -73,37 +77,57 @@ export default function ExtratoCard() {
     return false;
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const profile = await getUserById(user.id);
+  const fetchTransacoes = useCallback(async () => {
+    const profile = await getUserById(user.id);
+    if (profile) {
+      const lista = (profile.conta.extrato ?? []).map(
+        (item: any, index: number) => ({
+          id: item.id ?? index.toString(),
+          tipo: item.tipo,
+          valor: item.valor,
+          data: item.data,
+          codigoTransacao: item.codigoTransacao,
+        })
+      );
 
-      if (profile) {
-        console.log(profile);
-        setTimeout(() => {
-          const transacoes: Transacao[] = (profile.conta.extrato ?? []).map(
-            (item: any) => ({
-              id: item.id,
-              tipo: item.tipo,
-              valor: item.valor,
-              data: item.data,
-              codigoTransacao: item.codigoTransacao,
-            })
-          );
-          console.log(transacoes);
-          setAccount(user.conta);
-          setTransacoes(transacoes);
-          setLoading(false);
-        }, 2000);
-      }
-    };
-    fetchData();
-  }, [user.id, user.conta]);
+      // Ordena do mais recente para o mais antigo
+      const ordenadas = lista.sort(
+        (a: { data: string | number | Date; }, b: { data: string | number | Date; }) =>
+          new Date(b.data).getTime() - new Date(a.data).getTime()
+      );
+
+      setTransacoesTotais(ordenadas);
+      setTransacoes(ordenadas.slice(0, ITENS_POR_PAGINA));
+      setAccount(profile);
+      setLoading(false);
+    }
+  }, [user.id]);
+
+  useEffect(() => {
+    fetchTransacoes();
+  }, [fetchTransacoes]);
+
+  // Paginação dinâmica (scroll infinito)
+  const carregarMais = () => {
+    if (loadingMore || transacoes.length >= transacoesTotais.length) return;
+    setLoadingMore(true);
+    setTimeout(() => {
+      const novaPagina = pagina + 1;
+      const novoSlice = transacoesTotais.slice(
+        0,
+        novaPagina * ITENS_POR_PAGINA
+      );
+      setTransacoes(novoSlice);
+      setPagina(novaPagina);
+      setLoadingMore(false);
+    }, 1000);
+  };
 
   if (loading) {
-    return <Loader message={"Carregando extrato..."} size={"large"}></Loader>;
+    return <Loader message={"Carregando extrato..."} size={"large"} />;
   }
 
-  // --- FILTRO DAS TRANSAÇÕES ---
+  // Aplica o filtro selecionado
   const transacoesFiltradas =
     filtro === "Todos"
       ? transacoes
@@ -113,44 +137,39 @@ export default function ExtratoCard() {
     <View style={styles.container}>
       <Text style={styles.title}>Extrato</Text>
 
-      {/* Botões de Filtro */}
+      {/* Filtros */}
       <View style={styles.filterContainer}>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filtro === "Todos" && styles.filterButtonAtivo,
-          ]}
-          onPress={() => setFiltro("Todos")}
-        >
-          <Text style={styles.filterText}>Todos</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filtro === "Saque" && styles.filterButtonAtivo,
-          ]}
-          onPress={() => setFiltro("Saque")}
-        >
-          <Text style={styles.filterText}>Saques</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            filtro === "Depósito" && styles.filterButtonAtivo,
-          ]}
-          onPress={() => setFiltro("Depósito")}
-        >
-          <Text style={styles.filterText}>Depósitos</Text>
-        </TouchableOpacity>
+        {["Todos", "Saque", "Depósito"].map((f) => (
+          <TouchableOpacity
+            key={f}
+            style={[
+              styles.filterButton,
+              filtro === f && styles.filterButtonAtivo,
+            ]}
+            onPress={() => setFiltro(f as any)}
+          >
+            <Text style={styles.filterText}>{f}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
-          
+
+      {/* Scroll vertical infinito */}
       <FlatList
         data={transacoesFiltradas}
-        keyExtractor={(item) => item.codigoTransacao ?? ""}
+        keyExtractor={(item) => item.codigoTransacao ?? item.id}
+        showsVerticalScrollIndicator={false}
+        onEndReached={carregarMais}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loadingMore ? (
+            <ActivityIndicator
+              size="small"
+              color="#007B7F"
+              style={{ marginVertical: 10 }}
+            />
+          ) : null
+        }
         renderItem={({ item }) => {
-          // Ajuste para garantir que SAQUE seja sempre negativo
           const isSaque = item.tipo === "Saque";
           const valorExibido = isSaque
             ? `- R$ ${Math.abs(item.valor)}`
@@ -158,11 +177,7 @@ export default function ExtratoCard() {
             ? `+ R$ ${item.valor}`
             : `- R$ ${Math.abs(item.valor)}`;
 
-          const corValor = isSaque
-            ? "#b52626"
-            : item.valor >= 0
-            ? "#47A138"
-            : "#b52626";
+          const corValor = isSaque ? "#b52626" : "#47A138";
 
           return (
             <View style={styles.card}>
@@ -187,32 +202,33 @@ export default function ExtratoCard() {
                     filePath={filePath}
                     message={"Documento enviado com sucesso!"}
                     onPress={() => handleExtract(item.codigoTransacao)}
-                  ></Upload>
+                  />
                 </TouchableOpacity>
               </View>
-              <View>
-                {getCodigoTransacao(item.codigoTransacao) && (
-                  <>
-                    <View style={styles.documentContent}>
-                      <Text style={styles.subTitle}>Documento:</Text>
-                      <Text style={styles.data}>
-                        {documento?.documento
-                          ? documento?.documento.split("/").pop()
-                          : "-"}
-                      </Text>
-                    </View>
 
-                    <View style={styles.documentContent}>
-                      <Text style={styles.subTitle}>Enviado em: </Text>
-                      <Text style={styles.data}>
-                        {documento?.dataDocumento
-                          ? getformattedDate(new Date(documento?.dataDocumento))
-                          : "-"}
-                      </Text>
-                    </View>
-                  </>
-                )}
-              </View>
+              {getCodigoTransacao(item.codigoTransacao) && (
+                <View>
+                  <View style={styles.documentContent}>
+                    <Text style={styles.subTitle}>Documento:</Text>
+                    <Text style={styles.data}>
+                      {documento?.documento
+                        ? documento?.documento.split("/").pop()
+                        : "-"}
+                    </Text>
+                  </View>
+
+                  <View style={styles.documentContent}>
+                    <Text style={styles.subTitle}>Enviado em: </Text>
+                    <Text style={styles.data}>
+                      {documento?.dataDocumento
+                        ? getformattedDate(
+                            new Date(documento?.dataDocumento)
+                          )
+                        : "-"}
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
           );
         }}
@@ -229,6 +245,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     elevation: 2,
     margin: 20,
+    flex: 10,
   },
   title: {
     fontSize: 20,
@@ -242,18 +259,16 @@ const styles = StyleSheet.create({
     color: "#007B7F",
   },
   card: {
-    flexDirection: "column",
-    justifyContent: "space-between",
     backgroundColor: "#f9f9f9",
-    padding: 12,
-    marginVertical: 6,
-    borderRadius: 8,
-    gap: 25,
+    padding: 16,
+    marginVertical: 8,
+    borderRadius: 10,
+    elevation: 1,
   },
   cardContent: {
     flexDirection: "row",
-    flexWrap: "wrap",
     justifyContent: "space-between",
+    flexWrap: "wrap",
   },
   tipo: {
     fontSize: 16,
@@ -266,10 +281,6 @@ const styles = StyleSheet.create({
   data: {
     fontSize: 14,
     color: "#666",
-  },
-  loader: {
-    marginTop: 20,
-    alignItems: "center",
   },
   documentContent: {
     flexDirection: "row",
@@ -284,7 +295,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 6,
-    backgroundColor: "#ddd",
+    backgroundColor: "#ccc",
   },
   filterButtonAtivo: {
     backgroundColor: "#007B7F",
@@ -294,6 +305,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   iconUpload: {
-      marginTop: 10
-  }
+    marginTop: 10,
+  },
 });
