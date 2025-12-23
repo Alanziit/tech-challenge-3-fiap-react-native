@@ -46,6 +46,7 @@ export default function Index() {
     }, 1500);
   };
 
+
   if (isLoading) {
     return <Loading />;
   }
@@ -104,7 +105,7 @@ export default function Index() {
                 {"\n"}Crie sua conta com a gente!
               </Text>
               <Image
-                source={require("../assets/images/icone_ilustracao_banner.png")}
+                source={require("../assets/images/ilustracao_banner.svg")}
                 style={{ width: 300, height: 200 }}
                 resizeMode="contain"
               />
