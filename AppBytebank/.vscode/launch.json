@@ -1,0 +1,15 @@
+
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+       "name": "Debug Expo",
+       "type": "node",
+       "request": "launch",
+       "program": "${workspaceFolder}/node_modules/expo-cli/bin/expo.js",
+       "args": ["start"],
+       "cwd": "${workspaceFolder}"
+     }
+
+  ]
+}
